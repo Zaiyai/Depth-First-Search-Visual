@@ -123,7 +123,7 @@ public class DFSVisualizerFrame extends JFrame {
         exitButton = createButton("EXIT", RED);
 
         JPanel buttonPanel = new JPanel(
-                new FlowLayout(FlowLayout.CENTER, 10, 20)
+                new FlowLayout(FlowLayout.CENTER, 10, 5)
         );
 
         buttonPanel.setBackground(DARK);
