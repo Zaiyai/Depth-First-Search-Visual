@@ -10,11 +10,12 @@ public class Main extends JFrame {
     private final Color WHITE = Color.WHITE;
 
     public Main() {
-        showWelcomeFrame(); 
-    }   
+        showWelcomeFrame();
+    }
 
     public void showWelcomeFrame() {
 
+        //window settings
         setTitle("DFS Algorithm");
         setSize(1100, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -24,9 +25,11 @@ public class Main extends JFrame {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(DARK);
 
+        //welcome title
         JLabel title = new JLabel(
             "<html><center>" + "WELCOME TO<br>" +
-            "<font color='#4DA8FF'>DEPTH-FIRST SEARCH</font><br>" + "<font color='#4DA8FF'>ALGORITHM VISUAL</font>" +
+            "<font color='#4DA8FF'>DEPTH-FIRST SEARCH</font><br>" +
+            "<font color='#4DA8FF'>ALGORITHM VISUAL</font>" +
             "</center></html>", SwingConstants.CENTER);
 
         title.setFont(new Font("Arial", Font.BOLD, 40));
@@ -39,38 +42,37 @@ public class Main extends JFrame {
 
         mainPanel.add(centerPanel, BorderLayout.CENTER);
 
+        //buttons at the bottom
         JPanel buttonPanel = new JPanel(
-            new FlowLayout(FlowLayout.CENTER, 20, 25));
+            new FlowLayout(FlowLayout.CENTER, 20, 80));
 
         buttonPanel.setBackground(DARK);
-
-        JButton cancelButton = createButton("CANCEL", GRAY);
-
-        cancelButton.addActionListener(e -> {
-            System.exit(0);});
-
-        buttonPanel.add(cancelButton);
-
+ 
         JButton proceedButton = createButton("PROCEED", BLUE);
-
         proceedButton.addActionListener(e -> {
             new TreeBuilderFrame().setVisible(true);
-            dispose();});
-            buttonPanel.add(proceedButton);
+            dispose();
+        });
 
-
+        buttonPanel.add(proceedButton);
         JButton exitButton = createButton("EXIT", RED);
+
         exitButton.addActionListener(e -> {
             JOptionPane.showMessageDialog(
-                this, "Thank you for using Depth-First Search Algorithm Visual!");
-            System.exit(0);});
+                this,
+                "Thank you for using Depth-First Search Algorithm Visual!"
+            );
+            System.exit(0);
+        });
 
         buttonPanel.add(exitButton);
+
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
         add(mainPanel);
         setVisible(true);
     }
 
+    //creates a flat & colored button
     private JButton createButton(String text, Color color) {
         JButton button = new JButton(text);
 
@@ -78,6 +80,7 @@ public class Main extends JFrame {
         button.setForeground(WHITE);
         button.setBackground(color);
 
+        //remove the default button look
         button.setOpaque(true);
         button.setContentAreaFilled(true);
         button.setFocusPainted(false);
@@ -91,8 +94,10 @@ public class Main extends JFrame {
         return button;
     }
 
+    //starts the program
     public static void main(String[] args) {
-
-        SwingUtilities.invokeLater(() -> {new Main();});
+        SwingUtilities.invokeLater(() -> {
+            new Main();
+        });
     }
 }

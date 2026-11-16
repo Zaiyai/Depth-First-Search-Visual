@@ -7,8 +7,10 @@ public class TreeBuilderFrame extends JFrame {
     private static final Color FIELD_BG = new Color(31, 43, 66);
     private static final Color BLUE = new Color(35, 119, 210);
     private static final Color GREEN = new Color(35, 180, 120);
+    private static final Color RED = new Color(220, 75, 75);
     private static final Color GRAY = new Color(90, 105, 125);
-    private static final Color LIGHT_GRAY = new Color(170, 185, 205);
+    private static final Color YELLOW = new Color(255, 193, 7);
+    private static final Color TEAL = new Color(46, 196, 182);
     private static final Color WHITE = Color.WHITE;
 
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 30);
@@ -17,17 +19,24 @@ public class TreeBuilderFrame extends JFrame {
     private static final Font FIELD_FONT = new Font("SansSerif", Font.PLAIN, 16);
     private static final Font BUTTON_FONT = new Font("SansSerif", Font.BOLD, 13);
 
+    //sizes and spacing
     private static final int CONTROL_HEIGHT = 40;
-    private static final int STATUS_WIDTH = 300;
 
     private static final int GAP_SMALL = 6;
     private static final int GAP_MEDIUM = 10;
     private static final int GAP_LARGE = 15;
-    private static final int GAP_XLARGE = 25;
 
+    //steps of the flow
+    private static final int STEP_ROOT = 0;
+    private static final int STEP_QUESTION = 1;
+    private static final int STEP_CHILDREN = 2;
+    private static final int STEP_FINISH = 3;
+
+    //tree type choices
     private boolean isBST;
     private JLabel treeTypeLabel;
 
+    //input fields
     private JTextField rootInput;
     private JTextField leftInput;
     private JTextField rightInput;
@@ -36,18 +45,26 @@ public class TreeBuilderFrame extends JFrame {
 
     private JComboBox<String> traversalOrder;
 
+    //shows which node is being processed
     private JLabel parentLabel;
-    private JLabel statusLabel;
 
+    //buttons
     private JButton setRootButton;
     private JButton yesButton;
     private JButton noButton;
     private JButton addButton;
+    private JButton cancelChildButton;
     private JButton finishButton;
 
+    //one panel per step
+    private JPanel rootSection;
+    private JPanel questionSection;
     private JPanel childPanel;
+    private JPanel finishSection;
+
     private TreePanel treePanel;
 
+    //tree data
     private TreeNode root;
     private TreeNode currentParent;
 
@@ -56,6 +73,7 @@ public class TreeBuilderFrame extends JFrame {
     public TreeBuilderFrame() {
         chooseTreeType();
 
+        //window settings
         setTitle("DFS Algorithm");
         setSize(1100, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -78,7 +96,7 @@ public class TreeBuilderFrame extends JFrame {
         mainPanel.add(centerPanel, BorderLayout.CENTER);
 
         add(mainPanel);
-        setStartingState();
+        showStep(STEP_ROOT);   
         addButtonActions();
         setVisible(true);
     }
@@ -124,25 +142,23 @@ public class TreeBuilderFrame extends JFrame {
             "In-order",
             "Post-order"});
 
+        //button colors
         setRootButton = createButton("SET ROOT", BLUE);
         yesButton = createButton("YES", GREEN);
         noButton = createButton("NO", GRAY);
         addButton = createButton("ADD CHILDREN", BLUE);
+        cancelChildButton = createButton("CANCEL", RED);
         finishButton = createButton("START DFS", GREEN);
 
         treeTypeLabel = createLabel("Tree Type: " + (isBST ? "Binary Search Tree" : "Binary Tree"));
+        treeTypeLabel.setForeground(TEAL);
         parentLabel = createLabel("Waiting for root...");
+        parentLabel.setForeground(YELLOW);
 
-        statusLabel = createLabel("");
-        statusLabel.setForeground(LIGHT_GRAY);
-        setStatus("Enter the root node to begin.");
-
-        JPanel choicePanel = new JPanel(new GridLayout(1, 2, 10, 0));
-        choicePanel.setBackground(DARK);
-        choicePanel.add(yesButton);
-        choicePanel.add(noButton);
-        makeFullWidth(choicePanel);
+        buildRootSection();
+        buildQuestionSection();
         buildChildPanel();
+        buildFinishSection();
 
         JPanel inputPanel = new JPanel();
         inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
@@ -153,50 +169,31 @@ public class TreeBuilderFrame extends JFrame {
         inputPanel.add(space(GAP_MEDIUM));
 
         //root
-        inputPanel.add(createLabel("Enter Root Node:"));
-        inputPanel.add(space(GAP_SMALL));
-        inputPanel.add(rootInput);
-        inputPanel.add(space(GAP_MEDIUM));
-        inputPanel.add(setRootButton);
+        inputPanel.add(rootSection);
 
         //current parent
-        inputPanel.add(space(GAP_XLARGE));
         inputPanel.add(parentLabel);
-        inputPanel.add(space(GAP_MEDIUM));
-        inputPanel.add(createLabel("Do you want to add children?"));
-        inputPanel.add(space(GAP_SMALL));
-        inputPanel.add(choicePanel);
+        inputPanel.add(questionSection);
 
         //children
-        inputPanel.add(space(GAP_LARGE));
         inputPanel.add(childPanel);
 
-        //starting node
-        inputPanel.add(space(GAP_LARGE));
-        inputPanel.add(createLabel("Starting Node (default is root):"));
-        inputPanel.add(space(GAP_SMALL));
-        inputPanel.add(startInput);
+        //start node, target, traversal, start dfs
+        inputPanel.add(finishSection);
 
-        //target node
-        inputPanel.add(space(GAP_MEDIUM));
-        inputPanel.add(createLabel("Target Node:"));
-        inputPanel.add(space(GAP_SMALL));
-        inputPanel.add(targetInput);
+        //keeps the controls centered & scrolls if too tall
+        JPanel centerWrapper = new CenteredScrollPanel();
+        centerWrapper.setLayout(new GridBagLayout());
+        centerWrapper.setBackground(DARK);
 
-        //traversal order
-        inputPanel.add(space(GAP_MEDIUM));
-        inputPanel.add(createLabel("Choose the traversal order:"));
-        inputPanel.add(space(GAP_SMALL));
-        inputPanel.add(traversalOrder);
-
-        inputPanel.add(space(GAP_LARGE));
-        inputPanel.add(Box.createVerticalGlue());
-        inputPanel.add(finishButton);
-        inputPanel.add(space(GAP_MEDIUM));
-        inputPanel.add(statusLabel);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER;
+        centerWrapper.add(inputPanel, gbc);
 
         JScrollPane scrollPane = new JScrollPane(
-            inputPanel,
+            centerWrapper,
             ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -212,12 +209,47 @@ public class TreeBuilderFrame extends JFrame {
         return card;
     }
 
-    private void buildChildPanel() {
-        childPanel = new JPanel();
-        childPanel.setLayout(new BoxLayout(childPanel, BoxLayout.Y_AXIS));
-        childPanel.setBackground(DARK);
-        childPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    //empty vertical panel for one step
+    private JPanel createSection() {
+        JPanel section = new JPanel();
+        section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
+        section.setBackground(DARK);
+        section.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return section;
+    }
 
+    private void buildRootSection() {
+        rootSection = createSection();
+        rootSection.add(createLabel("Enter Root Node:"));
+        rootSection.add(space(GAP_SMALL));
+        rootSection.add(rootInput);
+        rootSection.add(space(GAP_MEDIUM));
+        rootSection.add(setRootButton);
+    }
+
+    private void buildQuestionSection() {
+        JPanel choicePanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        choicePanel.setBackground(DARK);
+        choicePanel.add(yesButton);
+        choicePanel.add(noButton);
+        makeFullWidth(choicePanel);
+
+        questionSection = createSection();
+        questionSection.add(space(GAP_MEDIUM));
+        questionSection.add(createLabel("Do you want to add children?"));
+        questionSection.add(space(GAP_SMALL));
+        questionSection.add(choicePanel);
+    }
+
+    private void buildChildPanel() {
+        JPanel buttonRow = new JPanel(new GridLayout(1, 2, 10, 0));
+        buttonRow.setBackground(DARK);
+        buttonRow.add(addButton);
+        buttonRow.add(cancelChildButton);
+        makeFullWidth(buttonRow);
+
+        childPanel = createSection();
+        childPanel.add(space(GAP_MEDIUM));
         childPanel.add(createLabel("Left Child:"));
         childPanel.add(space(GAP_SMALL));
         childPanel.add(leftInput);
@@ -228,16 +260,43 @@ public class TreeBuilderFrame extends JFrame {
         childPanel.add(rightInput);
 
         childPanel.add(space(GAP_MEDIUM));
-        childPanel.add(addButton);
+        childPanel.add(buttonRow);
     }
 
-    private void setStartingState() {
-        childPanel.setVisible(false);
-        yesButton.setEnabled(false);
-        noButton.setEnabled(false);
-        finishButton.setEnabled(false);
+    private void buildFinishSection() {
+        finishSection = createSection();
+
+        finishSection.add(createLabel("Starting Node (default is root):"));
+        finishSection.add(space(GAP_SMALL));
+        finishSection.add(startInput);
+
+        finishSection.add(space(GAP_MEDIUM));
+        finishSection.add(createLabel("Target Node:"));
+        finishSection.add(space(GAP_SMALL));
+        finishSection.add(targetInput);
+
+        finishSection.add(space(GAP_MEDIUM));
+        finishSection.add(createLabel("Choose the traversal order:"));
+        finishSection.add(space(GAP_SMALL));
+        finishSection.add(traversalOrder);
+
+        finishSection.add(space(GAP_LARGE));
+        finishSection.add(finishButton);
     }
 
+    //shows only the controls of the given step
+    private void showStep(int step) {
+        rootSection.setVisible(step == STEP_ROOT);
+        parentLabel.setVisible(step == STEP_QUESTION || step == STEP_CHILDREN);
+        questionSection.setVisible(step == STEP_QUESTION);
+        childPanel.setVisible(step == STEP_CHILDREN);
+        finishSection.setVisible(step == STEP_FINISH);
+
+        revalidate();
+        repaint();
+    }
+
+    //titled border for a card
     private void addCardBorder(JComponent component, String title) {
         component.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createTitledBorder(
@@ -292,6 +351,7 @@ public class TreeBuilderFrame extends JFrame {
                 setBackground(enabled ? color : color.darker().darker());
             }
         };
+
         button.setFont(BUTTON_FONT);
         button.setForeground(WHITE);
         button.setBackground(color);
@@ -302,6 +362,7 @@ public class TreeBuilderFrame extends JFrame {
         return button;
     }
 
+    //stretches a control across the width at a fixed height
     private void makeFullWidth(JComponent component) {
         component.setAlignmentX(Component.LEFT_ALIGNMENT);
         component.setPreferredSize(new Dimension(0, CONTROL_HEIGHT));
@@ -309,42 +370,44 @@ public class TreeBuilderFrame extends JFrame {
         component.setMaximumSize(new Dimension(Integer.MAX_VALUE, CONTROL_HEIGHT));
     }
 
+    //vertical gap
     private Component space(int height) {
         return Box.createVerticalStrut(height);
     }
 
-    private void setStatus(String text) {
-        statusLabel.setText(
-            "<html><div style='width:" + STATUS_WIDTH + "px'>" + text + "</div></html>"
-        );
-    }
-
     //functionalities
     private void addButtonActions() {
+
+        //save the root then ask about children
         setRootButton.addActionListener(e -> setRoot());
-        yesButton.addActionListener(e -> {
-            showChildInputs(true);
-            yesButton.setEnabled(false);
-            noButton.setEnabled(false);
-            setStatus("Enter the children of " + currentParent.value);
+
+        //show the child inputs
+        yesButton.addActionListener(e -> showStep(STEP_CHILDREN));
+
+        //skip to the next node
+        noButton.addActionListener(e -> moveToNextParent());
+
+        //validate and add children
+        addButton.addActionListener(e -> addChildren());
+
+        //clears the input and go back to the question
+        cancelChildButton.addActionListener(e -> {
+            leftInput.setText("");
+            rightInput.setText("");
+            showStep(STEP_QUESTION);
         });
 
-        noButton.addActionListener(e -> moveToNextParent());
-        addButton.addActionListener(e -> addChildren());
+         //open the visualizer
         finishButton.addActionListener(e -> startDFS());
     }
 
-    private void showChildInputs(boolean show) {
-        childPanel.setVisible(show);
-        revalidate();
-        repaint();
-    }
-
+    //error popup
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Invalid Input", JOptionPane.ERROR_MESSAGE);
     }
 
     //logics here
+    // validates and saves the root
     private void setRoot() {
         String rootText = rootInput.getText().trim();
 
@@ -366,22 +429,19 @@ public class TreeBuilderFrame extends JFrame {
         rootInput.setEnabled(false);
         setRootButton.setEnabled(false);
 
-        setStatus("Root node set successfully.");
         moveToNextParent();
     }
 
+    //picks the next node to ask about or finishes
     private void moveToNextParent() {
-        showChildInputs(false);
 
+        //if no nodes left: go to the final step
         if (parentQueue.isEmpty()) {
             currentParent = null;
             parentLabel.setText("All nodes processed!");
 
-            yesButton.setEnabled(false);
-            noButton.setEnabled(false);
-            finishButton.setEnabled(true);
+            showStep(STEP_FINISH);
 
-            setStatus("Tree building completed. Choose a traversal order and click START DFS.");
             treePanel.setCurrentNode(null);
             return;
         }
@@ -390,12 +450,10 @@ public class TreeBuilderFrame extends JFrame {
         parentLabel.setText("Current Parent: " + currentParent.value);
         treePanel.setCurrentNode(currentParent);
 
-        yesButton.setEnabled(true);
-        noButton.setEnabled(true);
-
-        setStatus("Do you want to add children to " + currentParent.value + "?");
+        showStep(STEP_QUESTION);
     }
-    
+
+    //validates the inputs and attaches the children
     private void addChildren() {
         String left = leftInput.getText().trim();
         String right = rightInput.getText().trim();
@@ -418,7 +476,7 @@ public class TreeBuilderFrame extends JFrame {
             return;
         }
 
-        // Binary Search Tree
+        //binary search tree rules
         if (isBST) {
             String error = null;
             if (!left.isEmpty()) {
@@ -457,6 +515,7 @@ public class TreeBuilderFrame extends JFrame {
         moveToNextParent();
     }
 
+    //validates the DFS settings
     private void startDFS() {
 
         if (root == null) {
@@ -468,6 +527,7 @@ public class TreeBuilderFrame extends JFrame {
         String start = startInput.getText().trim();
         String target = targetInput.getText().trim();
 
+        //start at the root unless another node is given
         TreeNode startNode = root;
         if (!start.isEmpty()) {
             if (!isNumber(start)) {
@@ -486,6 +546,7 @@ public class TreeBuilderFrame extends JFrame {
             }
         }
 
+        //target is optional but must exist in the tree
         if (!target.isEmpty()) {
             if (!isNumber(target)) {
                 showError("Target \"" + target + "\" is not a valid number.\nOnly numbers are allowed.");
@@ -508,14 +569,17 @@ public class TreeBuilderFrame extends JFrame {
         dispose();
     }
 
+    //true for integers and decimals with an optional minus
     private boolean isNumber(String text) {
         return text.matches("-?\\d+(\\.\\d+)?");
     }
 
+    //returns an error message if the value breaks the BST rule 
     private String bstError(String text, boolean isLeft) {
         double value = Double.parseDouble(text);
         double parent = Double.parseDouble(currentParent.value);
 
+        //allowed range for this parent's subtree
         double[] range = new double[2];
         findBounds(root, currentParent, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, range);
 
@@ -542,6 +606,7 @@ public class TreeBuilderFrame extends JFrame {
         return message;
     }
 
+    //finds the lowest and highest values allowed under the target node
     private boolean findBounds(TreeNode node, TreeNode target, double low, double high, double[] out) {
         if (node == null) return false;
 
@@ -556,16 +621,19 @@ public class TreeBuilderFrame extends JFrame {
             || findBounds(node.right, target, v, high, out);
     }
 
+    //prints whole numbers without .0
     private String show(double d) {
         return (d == Math.rint(d)) ? String.valueOf((long) d) : String.valueOf(d);
     }
 
+    //true if the value is in the tree
     private boolean existsInTree(TreeNode node, String value) {
         if (node == null) return false;
         if (node.value.equals(value)) return true;
         return existsInTree(node.left, value) || existsInTree(node.right, value);
     }
 
+    //returns the node with this value
     private TreeNode findNode(TreeNode node, String value) {
         if (node == null) return null;
         if (node.value.equals(value)) return node;
@@ -574,6 +642,7 @@ public class TreeBuilderFrame extends JFrame {
     }
 }
 
+//one node of the tree
 class TreeNode {
 
     String value;
@@ -584,5 +653,35 @@ class TreeNode {
         this.value = value;
         this.left = null;
         this.right = null;
+    }
+}
+
+//keeps the content centered and enables scrolling when it exceeds the available height
+class CenteredScrollPanel extends JPanel implements Scrollable {
+
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+        return 16;
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+        return 64;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+        return true;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+        return getParent() instanceof JViewport
+            && getParent().getHeight() > getPreferredSize().height;
     }
 }

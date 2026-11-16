@@ -10,18 +10,22 @@ public class TreePanel extends JPanel {
     private final Color GRAY = new Color(110, 125, 145);
     private final Color WHITE = Color.WHITE;
 
+    //drawing limits
     private static final int MARGIN = 20;
     private static final int MAX_RADIUS = 20;
     private static final int MIN_RADIUS = 8;
 
+    //tree and highlight state
     private TreeNode root;
     private TreeNode currentNode;
     private TreeNode foundNode;
 
+    //nodes in left-to-right order and their depth rows
     private final DefaultListModel<TreeNode> visited = new DefaultListModel<>();
     private final DefaultListModel<TreeNode> order = new DefaultListModel<>();
     private final DefaultListModel<Integer> depths = new DefaultListModel<>();
     private int deepestRow;
+
 
     public TreePanel() {
         setBackground(DARK);
@@ -38,17 +42,20 @@ public class TreePanel extends JPanel {
             RenderingHints.KEY_ANTIALIASING,
             RenderingHints.VALUE_ANTIALIAS_ON);
 
+        //recompute the layout on every refresh
         order.clear();
         depths.clear();
         deepestRow = 0;
         computeLayout(root, 0);
 
+        //spacing for one column per node & one row per level
         int columns = order.size();
         int rows = deepestRow + 1;
 
         double xStep = (getWidth() - 2.0 * MARGIN) / columns;
         double yStep = (getHeight() - 2.0 * MARGIN) / rows;
 
+        //shrink nodes to fit within the min and max size
         int radius = (int) Math.min(MAX_RADIUS, Math.min(xStep, yStep) / 2 - 2);
         radius = Math.max(MIN_RADIUS, radius);
 
@@ -58,6 +65,7 @@ public class TreePanel extends JPanel {
         drawNodes(g2, root, xStep, yStep, radius);
     }
 
+    //pixel position of a node from its column and depth
     private Point positionOf(TreeNode node, double xStep, double yStep) {
         int index = order.indexOf(node);
         int x = (int) (MARGIN + (index + 0.5) * xStep);
@@ -65,6 +73,7 @@ public class TreePanel extends JPanel {
         return new Point(x, y);
     }
 
+    //draws the lines from each node to its children
     private void drawEdges(Graphics2D g2, TreeNode node, double xStep, double yStep) {
         if (node == null) return;
 
@@ -75,7 +84,7 @@ public class TreePanel extends JPanel {
             Point c = positionOf(node.left, xStep, yStep);
             g2.drawLine(p.x, p.y, c.x, c.y);
         }
-        
+
         if (node.right != null) {
             Point c = positionOf(node.right, xStep, yStep);
             g2.drawLine(p.x, p.y, c.x, c.y);
@@ -85,6 +94,7 @@ public class TreePanel extends JPanel {
         drawEdges(g2, node.right, xStep, yStep);
     }
 
+     //draws each node and its value
     private void drawNodes(Graphics2D g2, TreeNode node, double xStep, double yStep, int radius) {
         if (node == null) return;
 
@@ -104,6 +114,7 @@ public class TreePanel extends JPanel {
         g2.setColor(WHITE);
         g2.drawOval(p.x - radius, p.y - radius, radius * 2, radius * 2);
 
+        //centering the value inside the circle
         FontMetrics fm = g2.getFontMetrics();
         int textX = p.x - fm.stringWidth(node.value) / 2;
         int textY = p.y + (fm.getAscent() - fm.getDescent()) / 2;
@@ -123,6 +134,7 @@ public class TreePanel extends JPanel {
         repaint();
     }
 
+    //used by the DFS animation
     public void markVisited(TreeNode node) {
         if (!visited.contains(node)) {
             visited.addElement(node);
@@ -142,6 +154,7 @@ public class TreePanel extends JPanel {
         repaint();
     }
 
+    //assigns each node a unique column position to prevent overlapping in the tree
     private void computeLayout(TreeNode node, int row) {
         if (node == null) return;
 

@@ -11,6 +11,7 @@ public class DFSVisualizerFrame extends JFrame {
     private final Color RED = new Color(220, 75, 75);
     private final Color WHITE = Color.WHITE;
 
+    //labels, tree and buttons on the screen
     private JLabel currentNodeLabel;
     private JLabel traversalLabel;
     private TreePanel treePanel;
@@ -20,12 +21,15 @@ public class DFSVisualizerFrame extends JFrame {
     private JButton backButton;
     private JButton exitButton;
 
+    //traversal settings and result
     private final String order;
     private final String target;
     private boolean targetFound = false;
 
+    //nodes in the order they will be visited
     private final DefaultListModel<TreeNode> visitOrder = new DefaultListModel<>();
 
+    //number of steps played so far
     private int stepIndex = 0;
 
     public DFSVisualizerFrame(TreeNode root, TreeNode startNode, String order, String target) {
@@ -35,6 +39,7 @@ public class DFSVisualizerFrame extends JFrame {
 
         buildVisitOrder(startNode);
 
+        //window settings
         setTitle("DFS Algorithm");
         setSize(1100, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -48,6 +53,7 @@ public class DFSVisualizerFrame extends JFrame {
                 BorderFactory.createEmptyBorder(15, 20, 10, 20)
         );
 
+        //screen title
         JLabel title = new JLabel(
                 "DEPTH-FIRST SEARCH VISUALIZATION",
                 SwingConstants.CENTER
@@ -58,18 +64,18 @@ public class DFSVisualizerFrame extends JFrame {
 
         mainPanel.add(title, BorderLayout.NORTH);
 
+        //setting the tree in the middle
         treePanel = new TreePanel();
         treePanel.setRoot(root);
         treePanel.setPreferredSize(new Dimension(850, 350));
 
         mainPanel.add(treePanel, BorderLayout.CENTER);
 
+        //status, legend and buttons at the bottom
         mainPanel.add(buildBottomPanel(), BorderLayout.SOUTH);
-
         add(mainPanel);
-
         addButtonActions();
-        resetTraversal();
+        resetTraversal();  
     }
 
     //design
@@ -83,6 +89,7 @@ public class DFSVisualizerFrame extends JFrame {
                 new BoxLayout(bottomPanel, BoxLayout.Y_AXIS)
         );
 
+        //current node and traversal path
         currentNodeLabel = createLabel("", 15);
         traversalLabel = createLabel("", 14);
 
@@ -91,6 +98,7 @@ public class DFSVisualizerFrame extends JFrame {
         bottomPanel.add(traversalLabel);
         bottomPanel.add(Box.createVerticalStrut(5));
 
+        //color legend
         JPanel legendPanel = new JPanel(
                 new FlowLayout(FlowLayout.CENTER, 12, 3)
         );
@@ -101,12 +109,14 @@ public class DFSVisualizerFrame extends JFrame {
         legendPanel.add(createLegend("Processing", YELLOW));
         legendPanel.add(createLegend("Visited", GRAY));
 
+        //only show the target color when a target was given
         if (!target.isEmpty()) {
             legendPanel.add(createLegend("Target found", GREEN));
         }
 
         bottomPanel.add(legendPanel);
 
+        //control buttons
         playButton = createButton("PLAY", GREEN);
         resetButton = createButton("RESET", GRAY);
         backButton = createButton("BACK", GRAY);
@@ -126,6 +136,7 @@ public class DFSVisualizerFrame extends JFrame {
         return bottomPanel;
     }
 
+    //centered label
     private JLabel createLabel(String text, int size) {
 
         JLabel label = new JLabel(text);
@@ -140,6 +151,7 @@ public class DFSVisualizerFrame extends JFrame {
         return label;
     }
 
+    //flat & colored button
     private JButton createButton(String text, Color color) {
 
         JButton button = new JButton(text);
@@ -150,11 +162,9 @@ public class DFSVisualizerFrame extends JFrame {
 
         button.setForeground(WHITE);
         button.setBackground(color);
-
         button.setOpaque(true);
         button.setFocusPainted(false);
         button.setBorderPainted(false);
-
         button.setPreferredSize(
                 new Dimension(110, 35)
         );
@@ -162,6 +172,7 @@ public class DFSVisualizerFrame extends JFrame {
         return button;
     }
 
+    //colored legend entry
     private JLabel createLegend(String text, Color color) {
 
         JLabel label = new JLabel("● " + text);
@@ -178,15 +189,18 @@ public class DFSVisualizerFrame extends JFrame {
     //functionalities
     private void addButtonActions() {
 
+        //PLAY
         playButton.addActionListener(e -> nextStep());
+        //RESET
         resetButton.addActionListener(e -> resetTraversal());
+        //BACK 
         backButton.addActionListener(e -> {
-
             new TreeBuilderFrame().setVisible(true);
             dispose();
 
         });
 
+        //EXIT
         exitButton.addActionListener(e -> {
             dispose();
 
@@ -198,6 +212,7 @@ public class DFSVisualizerFrame extends JFrame {
     }
 
     //logics here
+    // recursive walk that fills the visit order (pre, in or post-order)
     private void buildVisitOrder(TreeNode node) {
 
         if (node == null) {
@@ -225,18 +240,22 @@ public class DFSVisualizerFrame extends JFrame {
         }
     }
 
+    //plays one step of the traversal
     private void nextStep() {
 
+        //stop once the target is found
         if (targetFound) {
             return;
         }
 
+        //previous node is now visited
         if (stepIndex > 0) {
             treePanel.markVisited(
                     visitOrder.get(stepIndex - 1)
             );
         }
 
+        //all nodes done
         if (stepIndex >= visitOrder.size()) {
             treePanel.setCurrentNode(null);
 
@@ -254,6 +273,7 @@ public class DFSVisualizerFrame extends JFrame {
             return;
         }
 
+        //process the next node
         TreeNode node = visitOrder.get(stepIndex);
 
         stepIndex++;
@@ -268,6 +288,7 @@ public class DFSVisualizerFrame extends JFrame {
 
         updateTraversalLabel();
 
+        // check if this node is the target
         if (!target.isEmpty() && node.value.equals(target)) {
 
             targetFound = true;
@@ -283,6 +304,7 @@ public class DFSVisualizerFrame extends JFrame {
         }
     }
 
+    //clears the steps and highlights
     private void resetTraversal() {
 
         stepIndex = 0;
@@ -299,6 +321,7 @@ public class DFSVisualizerFrame extends JFrame {
         updateTraversalLabel();
     }
 
+    //shows the nodes visited 
     private void updateTraversalLabel() {
 
         String text = "";
