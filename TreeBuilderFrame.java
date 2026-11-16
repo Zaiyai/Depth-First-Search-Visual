@@ -267,6 +267,7 @@ public class TreeBuilderFrame extends JFrame {
         finishSection = createSection();
 
         finishSection.add(createLabel("Starting Node:"));
+        finishSection.add(createLabel("Starting Node (default is root):"));
         finishSection.add(space(GAP_SMALL));
         finishSection.add(startInput);
 
@@ -437,6 +438,7 @@ public class TreeBuilderFrame extends JFrame {
     private void moveToNextParent() {
 
         //if no nodes left go to the final step
+        //if no nodes left: go to the final step
         if (parentQueue.isEmpty()) {
             currentParent = null;
             parentLabel.setText("All nodes processed!");
