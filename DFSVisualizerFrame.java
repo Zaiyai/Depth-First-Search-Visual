@@ -26,14 +26,21 @@ public class DFSVisualizerFrame extends JFrame {
     private final String target;
     private boolean targetFound = false;
 
+    private final TreeNode root;
+    private final TreeNode startNode;
+    private final boolean isBST;
+
     //nodes in the order they will be visited
     private final DefaultListModel<TreeNode> visitOrder = new DefaultListModel<>();
 
     //number of steps played so far
     private int stepIndex = 0;
 
-    public DFSVisualizerFrame(TreeNode root, TreeNode startNode, String order, String target) {
+    public DFSVisualizerFrame(TreeNode root, TreeNode startNode, String order, String target, boolean isBST) {
 
+        this.root = root;
+        this.startNode = startNode;
+        this.isBST = isBST;
         this.order = order;
         this.target = target.trim();
 
@@ -67,6 +74,8 @@ public class DFSVisualizerFrame extends JFrame {
         //setting the tree in the middle
         treePanel = new TreePanel();
         treePanel.setRoot(root);
+        treePanel.setStartNode(startNode);
+        treePanel.setTargetValue(this.target);
         treePanel.setPreferredSize(new Dimension(850, 350));
 
         mainPanel.add(treePanel, BorderLayout.CENTER);
@@ -195,7 +204,7 @@ public class DFSVisualizerFrame extends JFrame {
         resetButton.addActionListener(e -> resetTraversal());
         //BACK 
         backButton.addActionListener(e -> {
-            new TreeBuilderFrame().setVisible(true);
+            new TreeBuilderFrame(root, isBST, startNode.value, target, order);
             dispose();
 
         });
