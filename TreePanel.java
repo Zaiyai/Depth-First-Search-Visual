@@ -8,6 +8,8 @@ public class TreePanel extends JPanel {
     private final Color YELLOW = new Color(255, 193, 7);
     private final Color GREEN = new Color(35, 180, 120);
     private final Color GRAY = new Color(110, 125, 145);
+    private final Color TEAL = new Color(46, 196, 182);
+    private final Color ORANGE = new Color(255, 140, 0);
     private final Color WHITE = Color.WHITE;
 
     //drawing limits
@@ -19,6 +21,8 @@ public class TreePanel extends JPanel {
     private TreeNode root;
     private TreeNode currentNode;
     private TreeNode foundNode;
+    private TreeNode startNode;
+    private String targetValue = "";
 
     //nodes in left-to-right order and their depth rows
     private final DefaultListModel<TreeNode> visited = new DefaultListModel<>();
@@ -120,8 +124,44 @@ public class TreePanel extends JPanel {
         int textY = p.y + (fm.getAscent() - fm.getDescent()) / 2;
         g2.drawString(node.value, textX, textY);
 
+        drawTags(g2, node, p, radius);
+
         drawNodes(g2, node.left, xStep, yStep, radius);
         drawNodes(g2, node.right, xStep, yStep, radius);
+    }
+
+    private void drawTags(Graphics2D g2, TreeNode node, Point p, int radius) {
+        boolean isStart = (node == startNode);
+        boolean isTarget = !targetValue.isEmpty() && node.value.equals(targetValue);
+        if (!isStart && !isTarget) return;
+
+        Font original = g2.getFont();
+        g2.setFont(original.deriveFont(Font.BOLD, Math.max(8f, radius * 0.55f)));
+        FontMetrics fm = g2.getFontMetrics();
+
+        int y = p.y + radius + fm.getAscent() + 2;
+
+        if (isStart) {
+            g2.setColor(TEAL);
+            g2.drawString("START", p.x - fm.stringWidth("START") / 2, y);
+            y += fm.getHeight() - 2;
+        }
+        if (isTarget) {
+            g2.setColor(ORANGE);
+            g2.drawString("TARGET", p.x - fm.stringWidth("TARGET") / 2, y);
+        }
+
+        g2.setFont(original);
+    }
+
+    public void setStartNode(TreeNode node) {
+        startNode = node;
+        repaint();
+    }
+
+    public void setTargetValue(String value) {
+        targetValue = (value == null) ? "" : value.trim();
+        repaint();
     }
 
     public void setRoot(TreeNode root) {
