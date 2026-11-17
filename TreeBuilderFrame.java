@@ -70,8 +70,43 @@ public class TreeBuilderFrame extends JFrame {
 
     private final DefaultListModel<TreeNode> parentQueue = new DefaultListModel<>();
 
+    private boolean ready;
+
     public TreeBuilderFrame() {
-        chooseTreeType();
+        if (!chooseTreeType()) {
+            dispose();
+            return;
+        }
+        ready = true;
+        buildFrame();
+        showStep(STEP_ROOT);
+        addButtonActions();
+        setVisible(true);
+    }
+
+    public TreeBuilderFrame(TreeNode root, boolean isBST, String start, String target, String order) {
+        this.isBST = isBST;
+        ready = true;
+        buildFrame();
+        addButtonActions();
+
+        this.root = root;
+        treePanel.setRoot(root);
+        parentQueue.addElement(root);
+
+        rootInput.setText(root.value);
+        rootInput.setEnabled(false);
+        setRootButton.setEnabled(false);
+
+        startInput.setText(start);
+        targetInput.setText(target);
+        traversalOrder.setSelectedItem(order);
+
+        moveToNextParent();
+        setVisible(true);
+    }
+
+    private void buildFrame() {
 
         //window settings
         setTitle("DFS Algorithm");
@@ -96,12 +131,13 @@ public class TreeBuilderFrame extends JFrame {
         mainPanel.add(centerPanel, BorderLayout.CENTER);
 
         add(mainPanel);
-        showStep(STEP_ROOT);   
-        addButtonActions();
-        setVisible(true);
     }
 
-    private void chooseTreeType() {
+    public boolean isReady() {
+        return ready;
+    }
+
+    private boolean chooseTreeType() {
         String[] options = {"Binary Tree", "Binary Search Tree"};
 
         int choice = JOptionPane.showOptionDialog(
@@ -113,9 +149,10 @@ public class TreeBuilderFrame extends JFrame {
             null, options, options[0]);
 
         if (choice == -1) {
-            System.exit(0);
+            return false;
         }
         isBST = (choice == 1);
+        return true;
     }
 
     //design
@@ -382,10 +419,16 @@ public class TreeBuilderFrame extends JFrame {
         setRootButton.addActionListener(e -> setRoot());
 
         //show the child inputs
-        yesButton.addActionListener(e -> showStep(STEP_CHILDREN));
+        yesButton.addActionListener(e -> {
+            fillChildInputs();
+            showStep(STEP_CHILDREN);
+        });
 
         //skip to the next node
-        noButton.addActionListener(e -> moveToNextParent());
+        noButton.addActionListener(e -> {
+            enqueueChildren();
+            moveToNextParent();
+        });
 
         //validate and add children
         addButton.addActionListener(e -> addChildren());
@@ -454,12 +497,27 @@ public class TreeBuilderFrame extends JFrame {
         showStep(STEP_QUESTION);
     }
 
+    private void fillChildInputs() {
+        leftInput.setText(currentParent.left != null ? currentParent.left.value : "");
+        rightInput.setText(currentParent.right != null ? currentParent.right.value : "");
+    }
+
+    private void enqueueChildren() {
+        if (currentParent.left != null) {
+            parentQueue.addElement(currentParent.left);
+        }
+        if (currentParent.right != null) {
+            parentQueue.addElement(currentParent.right);
+        }
+    }
+
     //validates the inputs and attaches the children
     private void addChildren() {
         String left = leftInput.getText().trim();
         String right = rightInput.getText().trim();
 
-        if (left.isEmpty() && right.isEmpty()) {
+        boolean hasChildren = currentParent.left != null || currentParent.right != null;
+        if (left.isEmpty() && right.isEmpty() && !hasChildren) {
             showError("Please enter at least one child.");
             return;
         }
@@ -500,15 +558,19 @@ public class TreeBuilderFrame extends JFrame {
             }
         }
 
-        if (!left.isEmpty()) {
+        if (left.isEmpty()) {
+            currentParent.left = null;
+        } else if (currentParent.left == null || !currentParent.left.value.equals(left)) {
             currentParent.left = new TreeNode(left);
-            parentQueue.addElement(currentParent.left);
         }
 
-        if (!right.isEmpty()) {
+        if (right.isEmpty()) {
+            currentParent.right = null;
+        } else if (currentParent.right == null || !currentParent.right.value.equals(right)) {
             currentParent.right = new TreeNode(right);
-            parentQueue.addElement(currentParent.right);
         }
+
+        enqueueChildren();
 
         treePanel.repaint();
         leftInput.setText("");
@@ -564,7 +626,7 @@ public class TreeBuilderFrame extends JFrame {
             }
         }
 
-        DFSVisualizerFrame dfsFrame = new DFSVisualizerFrame(root, startNode, order, target);
+        DFSVisualizerFrame dfsFrame = new DFSVisualizerFrame(root, startNode, order, target, isBST);
         dfsFrame.setVisible(true);
 
         dispose();
