@@ -50,8 +50,10 @@ public class Main extends JFrame {
  
         JButton proceedButton = createButton("PROCEED", BLUE);
         proceedButton.addActionListener(e -> {
-            new TreeBuilderFrame().setVisible(true);
-            dispose();
+            TreeBuilderFrame builder = new TreeBuilderFrame();
+            if (builder.isReady()) {
+                dispose();
+            }
         });
 
         buttonPanel.add(proceedButton);
