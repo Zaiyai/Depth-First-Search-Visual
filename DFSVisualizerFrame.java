@@ -9,6 +9,7 @@ public class DFSVisualizerFrame extends JFrame {
     private final Color YELLOW = new Color(255, 193, 7);
     private final Color GRAY = new Color(110, 125, 145);
     private final Color RED = new Color(220, 75, 75);
+    private final Color TEAL = new Color(46, 196, 182);
     private final Color WHITE = Color.WHITE;
 
     //labels, tree and buttons on the screen
@@ -68,8 +69,23 @@ public class DFSVisualizerFrame extends JFrame {
 
         title.setFont(new Font("Arial", Font.BOLD, 23));
         title.setForeground(WHITE);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        mainPanel.add(title, BorderLayout.NORTH);
+        JLabel treeTypeLabel = createLabel(
+                "Tree Type: " + (isBST ? "Binary Search Tree" : "Binary Tree"),
+                18
+        );
+        treeTypeLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        treeTypeLabel.setForeground(TEAL);
+
+        JPanel titlePanel = new JPanel();
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+        titlePanel.setBackground(DARK);
+        titlePanel.add(title);
+        titlePanel.add(Box.createVerticalStrut(20));
+        titlePanel.add(treeTypeLabel);
+
+        mainPanel.add(titlePanel, BorderLayout.NORTH);
 
         //setting the tree in the middle
         treePanel = new TreePanel();
