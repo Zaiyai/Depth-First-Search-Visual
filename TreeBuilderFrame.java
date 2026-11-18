@@ -48,6 +48,8 @@ public class TreeBuilderFrame extends JFrame {
     //shows which node is being processed
     private JLabel parentLabel;
 
+    private JLabel questionLabel;
+
     //buttons
     private JButton setRootButton;
     private JButton yesButton;
@@ -271,9 +273,11 @@ public class TreeBuilderFrame extends JFrame {
         choicePanel.add(noButton);
         makeFullWidth(choicePanel);
 
+        questionLabel = createLabel("Do you want to add children?");
+
         questionSection = createSection();
         questionSection.add(space(GAP_MEDIUM));
-        questionSection.add(createLabel("Do you want to add children?"));
+        questionSection.add(questionLabel);
         questionSection.add(space(GAP_SMALL));
         questionSection.add(choicePanel);
     }
@@ -493,6 +497,11 @@ public class TreeBuilderFrame extends JFrame {
         currentParent = parentQueue.remove(0);
         parentLabel.setText("Current Parent: " + currentParent.value);
         treePanel.setCurrentNode(currentParent);
+
+        boolean hasChildren = currentParent.left != null || currentParent.right != null;
+        questionLabel.setText(hasChildren
+                ? "Do you want to change the children?"
+                : "Do you want to add children?");
 
         showStep(STEP_QUESTION);
     }
