@@ -8,7 +8,7 @@ public class TreePanel extends JPanel {
     private final Color YELLOW = new Color(255, 193, 7);
     private final Color GREEN = new Color(35, 180, 120);
     private final Color GRAY = new Color(110, 125, 145);
-    private final Color TEAL = new Color(46, 196, 182);
+    private final Color PURPLE = new Color(176, 124, 255);
     private final Color ORANGE = new Color(255, 140, 0);
     private final Color WHITE = Color.WHITE;
 
@@ -142,7 +142,7 @@ public class TreePanel extends JPanel {
         int y = p.y + radius + fm.getAscent() + 2;
 
         if (isStart) {
-            g2.setColor(TEAL);
+            g2.setColor(PURPLE);
             g2.drawString("START", p.x - fm.stringWidth("START") / 2, y);
             y += fm.getHeight() - 2;
         }
