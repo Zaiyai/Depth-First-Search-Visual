@@ -18,6 +18,7 @@ public class TreeBuilderFrame extends JFrame {
     private static final Font LABEL_FONT = new Font("SansSerif", Font.BOLD, 14);
     private static final Font FIELD_FONT = new Font("SansSerif", Font.PLAIN, 16);
     private static final Font BUTTON_FONT = new Font("SansSerif", Font.BOLD, 13);
+    private static final Font TREE_TYPE_FONT = new Font("SansSerif", Font.BOLD, 17);
 
     //sizes and spacing
     private static final int CONTROL_HEIGHT = 40;
@@ -161,9 +162,16 @@ public class TreeBuilderFrame extends JFrame {
     private JPanel buildPreviewCard() {
         treePanel = new TreePanel();
 
+        treeTypeLabel = createLabel("Tree Type: " + (isBST ? "Binary Search Tree" : "Binary Tree"));
+        treeTypeLabel.setFont(TREE_TYPE_FONT);
+        treeTypeLabel.setForeground(TEAL);
+        treeTypeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        treeTypeLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, GAP_MEDIUM, 0));
+
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(DARK);
         addCardBorder(card, "TREE PREVIEW");
+        card.add(treeTypeLabel, BorderLayout.NORTH);
         card.add(treePanel, BorderLayout.CENTER);
 
         return card;
@@ -189,8 +197,6 @@ public class TreeBuilderFrame extends JFrame {
         cancelChildButton = createButton("CANCEL", RED);
         finishButton = createButton("START DFS", GREEN);
 
-        treeTypeLabel = createLabel("Tree Type: " + (isBST ? "Binary Search Tree" : "Binary Tree"));
-        treeTypeLabel.setForeground(TEAL);
         parentLabel = createLabel("Waiting for root...");
         parentLabel.setForeground(YELLOW);
 
@@ -203,9 +209,6 @@ public class TreeBuilderFrame extends JFrame {
         inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
         inputPanel.setBackground(DARK);
         inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
-
-        inputPanel.add(treeTypeLabel);
-        inputPanel.add(space(GAP_MEDIUM));
 
         //root
         inputPanel.add(rootSection);
