@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -245,10 +247,46 @@ public class TreePanel extends JPanel {
 
         private final Set<String> visited = new LinkedHashSet<>();
         private final Map<String, Point> positions = new HashMap<>();
+        private boolean edgeCreationEnabled;
+        private String dragFrom;
+        private Point dragPoint;
+        private java.util.function.BiConsumer<String, String> edgeCreationHandler;
 
         public GraphPanel() {
             setBackground(BACKGROUND);
             setPreferredSize(new Dimension(1000, 350));
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (edgeCreationEnabled && SwingUtilities.isLeftMouseButton(e)) {
+                        dragFrom = vertexAt(e.getPoint());
+                        dragPoint = e.getPoint();
+                        repaint();
+                    }
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    if (dragFrom != null) {
+                        String dragTo = vertexAt(e.getPoint());
+                        if (dragTo != null && !dragFrom.equals(dragTo) && edgeCreationHandler != null) {
+                            edgeCreationHandler.accept(dragFrom, dragTo);
+                        }
+                    }
+                    dragFrom = null;
+                    dragPoint = null;
+                    repaint();
+                }
+            });
+            addMouseMotionListener(new MouseAdapter() {
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    if (dragFrom != null) {
+                        dragPoint = e.getPoint();
+                        repaint();
+                    }
+                }
+            });
         }
 
         @Override
@@ -263,12 +301,47 @@ public class TreePanel extends JPanel {
 
             List<String> vertices = graph.getVertices();
             int count = vertices.size();
-            int radius = Math.max(MIN_RADIUS,
-                Math.min(MAX_RADIUS, Math.min(getWidth(), getHeight()) / (count + 3)));
+            int radius = vertexRadius(count);
 
             computePositions(vertices);
             drawEdges(g2, radius);
+            drawPendingEdge(g2);
             drawVertices(g2, vertices, radius);
+        }
+
+        private int vertexRadius(int count) {
+            return Math.max(MIN_RADIUS,
+                Math.min(MAX_RADIUS, Math.min(getWidth(), getHeight()) / (count + 3)));
+        }
+
+        private String vertexAt(Point point) {
+            if (graph == null || graph.vertexCount() == 0) {
+                return null;
+            }
+
+            List<String> vertices = graph.getVertices();
+            computePositions(vertices);
+            int hitRadius = vertexRadius(vertices.size()) + 4;
+            for (String vertex : vertices) {
+                Point center = positions.get(vertex);
+                if (center.distance(point) <= hitRadius) {
+                    return vertex;
+                }
+            }
+            return null;
+        }
+
+        private void drawPendingEdge(Graphics2D g2) {
+            if (dragFrom == null || dragPoint == null) {
+                return;
+            }
+            Point from = positions.get(dragFrom);
+            if (from != null) {
+                g2.setColor(GREEN);
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawLine(from.x, from.y, dragPoint.x, dragPoint.y);
+                g2.setStroke(new BasicStroke(1f));
+            }
         }
 
         //vertices are placed evenly around a circle
@@ -413,6 +486,19 @@ public class TreePanel extends JPanel {
         public void setGraph(TreeBuilderFrame.GraphBuilderFrame.Graph graph) {
             this.graph = graph;
             repaint();
+        }
+
+        public void setEdgeCreationEnabled(boolean enabled) {
+            edgeCreationEnabled = enabled;
+            dragFrom = null;
+            dragPoint = null;
+            setCursor(Cursor.getPredefinedCursor(
+                enabled ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+            repaint();
+        }
+
+        public void setEdgeCreationHandler(java.util.function.BiConsumer<String, String> handler) {
+            edgeCreationHandler = handler;
         }
 
         public void setStartVertex(String value) {

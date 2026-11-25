@@ -745,8 +745,6 @@ public class TreeBuilderFrame extends JFrame {
         //inputs
         private JTextField vertexInput;
         private JComboBox<String> typeCombo;
-        private JComboBox<String> fromCombo;
-        private JComboBox<String> toCombo;
         private JComboBox<String> startCombo;
         private JComboBox<String> targetCombo;
 
@@ -754,12 +752,15 @@ public class TreeBuilderFrame extends JFrame {
         private final DefaultListModel<Graph.Edge> edgeModel = new DefaultListModel<>();
         private JList<String> vertexList;
         private JList<Graph.Edge> edgeList;
+        private JPanel vertexSection;
+        private JPanel edgeSection;
 
         //buttons
         private JButton addVertexButton;
         private JButton renameButton;
         private JButton deleteVertexButton;
-        private JButton addEdgeButton;
+        private JButton finishVerticesButton;
+        private JButton editVerticesButton;
         private JButton removeEdgeButton;
         private JButton visualizeButton;
         private JButton clearButton;
@@ -772,6 +773,7 @@ public class TreeBuilderFrame extends JFrame {
             buildFrame();
             addButtonActions();
             refreshAll();
+            setVertexEntryMode(true);
             setVisible(true);
         }
 
@@ -789,6 +791,7 @@ public class TreeBuilderFrame extends JFrame {
             targetCombo.setSelectedItem(target == null || target.isEmpty() ? NONE : target);
 
             refreshAll();
+            setVertexEntryMode(false);
             setVisible(true);
         }
 
@@ -858,18 +861,18 @@ public class TreeBuilderFrame extends JFrame {
         private JPanel buildInputCard() {
             vertexInput = createTextField();
             typeCombo = createComboBox(new String[]{UNDIRECTED, DIRECTED});
-            fromCombo = createComboBox(new String[0]);
-            toCombo = createComboBox(new String[0]);
             startCombo = createComboBox(new String[0]);
             targetCombo = createComboBox(new String[]{NONE});
 
             addVertexButton = createButton("ADD VERTEX", BLUE);
             renameButton = createButton("RENAME", AMBER);
             deleteVertexButton = createButton("DELETE VERTEX", RED);
-            addEdgeButton = createButton("ADD EDGE", BLUE);
+            finishVerticesButton = createButton("DONE ADDING VERTICES", GREEN);
             removeEdgeButton = createButton("REMOVE EDGE", RED);
+            editVerticesButton = createButton("EDIT VERTICES", BLUE);
             visualizeButton = createButton("VISUALIZE DFS", GREEN);
             clearButton = createButton("CLEAR GRAPH", GRAY);
+            editVerticesButton.setVisible(false);
 
             vertexList = new JList<>(vertexModel);
             styleList(vertexList);
@@ -955,24 +958,16 @@ public class TreeBuilderFrame extends JFrame {
 
             section.add(space(GAP_SMALL));
             section.add(deleteVertexButton);
+            section.add(space(GAP_MEDIUM));
+            section.add(finishVerticesButton);
+            vertexSection = section;
             return section;
         }
 
         private JPanel buildEdgeSection() {
             JPanel section = createSection();
             section.add(space(GAP_MEDIUM));
-            section.add(createLabel("Connection From:"));
-            section.add(space(GAP_SMALL));
-            section.add(fromCombo);
-
-            section.add(space(GAP_SMALL));
-            section.add(createLabel("Connection To:"));
-            section.add(space(GAP_SMALL));
-            section.add(toCombo);
-
-            section.add(space(GAP_SMALL));
-            section.add(addEdgeButton);
-
+            section.add(createLabel("Drag from one vertex to another to add a connection."));
             section.add(space(GAP_MEDIUM));
             section.add(createLabel("Edges:"));
             section.add(space(GAP_SMALL));
@@ -980,6 +975,7 @@ public class TreeBuilderFrame extends JFrame {
 
             section.add(space(GAP_SMALL));
             section.add(removeEdgeButton);
+            edgeSection = section;
             return section;
         }
 
@@ -995,6 +991,8 @@ public class TreeBuilderFrame extends JFrame {
             section.add(space(GAP_SMALL));
             section.add(targetCombo);
 
+            section.add(space(GAP_MEDIUM));
+            section.add(editVerticesButton);
             section.add(space(GAP_LARGE));
             section.add(visualizeButton);
             section.add(space(GAP_SMALL));
@@ -1088,10 +1086,29 @@ public class TreeBuilderFrame extends JFrame {
             addVertexButton.addActionListener(e -> addVertex());
             renameButton.addActionListener(e -> renameVertex());
             deleteVertexButton.addActionListener(e -> deleteVertex());
-            addEdgeButton.addActionListener(e -> addEdge());
+            finishVerticesButton.addActionListener(e -> finishAddingVertices());
+            editVerticesButton.addActionListener(e -> setVertexEntryMode(true));
             removeEdgeButton.addActionListener(e -> removeEdge());
             visualizeButton.addActionListener(e -> visualizeDFS());
             clearButton.addActionListener(e -> clearGraph());
+            graphPanel.setEdgeCreationHandler(this::addConnection);
+        }
+
+        private void finishAddingVertices() {
+            if (graph.vertexCount() == 0) {
+                showError("Please add at least one vertex before continuing.");
+                return;
+            }
+            setVertexEntryMode(false);
+        }
+
+        private void setVertexEntryMode(boolean enabled) {
+            vertexSection.setVisible(enabled);
+            edgeSection.setVisible(!enabled);
+            editVerticesButton.setVisible(!enabled);
+            graphPanel.setEdgeCreationEnabled(!enabled);
+            revalidate();
+            repaint();
         }
 
         private void showError(String message) {
@@ -1182,16 +1199,9 @@ public class TreeBuilderFrame extends JFrame {
             graphPanel.highlightVertex(null);
         }
 
-        private void addEdge() {
-            String from = (String) fromCombo.getSelectedItem();
-            String to = (String) toCombo.getSelectedItem();
-
-            if (from == null || to == null || from.equals(NONE) || to.equals(NONE)) {
-                showError("Add at least two vertices before creating an edge.");
-                return;
-            }
+        private void addConnection(String from, String to) {
             if (!graph.addEdge(from, to)) {
-                showError("That edge already exists in this graph.");
+                showError("That connection already exists in this graph.");
                 return;
             }
 
@@ -1224,6 +1234,7 @@ public class TreeBuilderFrame extends JFrame {
                 vertexInput.setText("");
                 graphPanel.reset();
                 refreshAll();
+                setVertexEntryMode(true);
             }
         }
 
@@ -1265,8 +1276,6 @@ public class TreeBuilderFrame extends JFrame {
                 edgeModel.addElement(edge);
             }
 
-            fillCombo(fromCombo, false);
-            fillCombo(toCombo, false);
             fillCombo(startCombo, false);
             fillCombo(targetCombo, true);
 
