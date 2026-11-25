@@ -50,14 +50,9 @@ public class Main extends JFrame {
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 60, 0));
 
         JButton proceedButton = createButton("PROCEED", PINK);
-        proceedButton.addActionListener(e -> {
-            TreeBuilderFrame builder = new TreeBuilderFrame();
-            if (builder.isReady()) {
-                dispose();
-            }
-        });
-
+        proceedButton.addActionListener(e -> chooseStructureType());
         buttonPanel.add(proceedButton);
+
         JButton exitButton = createButton("EXIT", RIBBON);
 
         exitButton.addActionListener(e -> {
@@ -73,6 +68,43 @@ public class Main extends JFrame {
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
         add(mainPanel);
         setVisible(true);
+    }
+
+    private void chooseStructureType() {
+        String[] options = {
+            "Binary Tree",
+            "Binary Search Tree",
+            "Directed Graph",
+            "Undirected Graph"
+        };
+
+        int choice = JOptionPane.showOptionDialog(
+            this,
+            "What would you like to build?",
+            "Choose Structure Type",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]);
+
+        switch (choice) {
+            case 0:
+                new TreeBuilderFrame(false);
+                break;
+            case 1:
+                new TreeBuilderFrame(true);
+                break;
+            case 2:
+                new TreeBuilderFrame.GraphBuilderFrame(true);
+                break;
+            case 3:
+                new TreeBuilderFrame.GraphBuilderFrame(false);
+                break;
+            default:
+                return;
+        }
+        dispose();
     }
 
     //creates a flat & colored button

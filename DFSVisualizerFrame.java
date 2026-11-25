@@ -1,5 +1,11 @@
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class DFSVisualizerFrame extends JFrame {
 
@@ -361,5 +367,253 @@ public class DFSVisualizerFrame extends JFrame {
         traversalLabel.setText(
                 order + " Traversal: " + text
         );
+    }
+
+
+
+    //steps through a DFS on a general graph, cycle-safe and one vertex at a time
+    public static class GraphDFSVisualizerFrame extends JFrame {
+
+        private final Color DARK = new Color(255, 228, 236);
+        private final Color TEXT = new Color(122, 52, 82);
+        private final Color BLUE = new Color(236, 120, 160);
+        private final Color GREEN = new Color(86, 160, 110);
+        private final Color YELLOW = new Color(222, 150, 40);
+        private final Color GRAY = new Color(190, 150, 170);
+        private final Color RED = new Color(200, 70, 90);
+        private final Color TEAL = new Color(200, 90, 130);
+        private final Color WHITE = Color.WHITE;
+
+        private final TreeBuilderFrame.GraphBuilderFrame.Graph graph;
+        private final String start;
+        private final String target;
+        private final boolean directed;
+
+        //vertices in the order DFS reaches them, with the edge used to reach each one
+        private final List<String> visitOrder = new ArrayList<>();
+        private final Map<String, String> reachedFrom = new HashMap<>();
+
+        private int stepIndex = 0;
+        private boolean targetFound = false;
+
+        private TreePanel.GraphPanel graphPanel;
+        private JLabel currentVertexLabel;
+        private JLabel traversalLabel;
+
+        private JButton playButton;
+        private JButton resetButton;
+        private JButton backButton;
+        private JButton exitButton;
+
+        public GraphDFSVisualizerFrame(TreeBuilderFrame.GraphBuilderFrame.Graph graph, boolean directed, String start, String target) {
+            this.graph = graph;
+            this.directed = directed;
+            this.start = start;
+            this.target = (target == null) ? "" : target.trim();
+
+            buildVisitOrder();
+
+            setTitle("DFS Algorithm");
+            setSize(1100, 650);
+            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            setLocationRelativeTo(null);
+            setResizable(true);
+
+            JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+            mainPanel.setBackground(DARK);
+            mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 10, 20));
+
+            JLabel title = new JLabel("Depth-First Search Visualization", SwingConstants.CENTER);
+            title.setFont(new Font("Segoe Script", Font.BOLD, 24));
+            title.setForeground(TEXT);
+            title.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            JLabel typeLabel = createLabel("Graph Type: " + (directed ? "Directed Graph" : "Undirected Graph"), 18);
+            typeLabel.setFont(new Font("Georgia", Font.BOLD | Font.ITALIC, 18));
+            typeLabel.setForeground(TEAL);
+
+            JPanel titlePanel = new JPanel();
+            titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+            titlePanel.setBackground(DARK);
+            titlePanel.add(title);
+            titlePanel.add(Box.createVerticalStrut(20));
+            titlePanel.add(typeLabel);
+            mainPanel.add(titlePanel, BorderLayout.NORTH);
+
+            graphPanel = new TreePanel.GraphPanel();
+            graphPanel.setGraph(graph);
+            graphPanel.setStartVertex(start);
+            graphPanel.setTargetValue(this.target);
+            graphPanel.setPreferredSize(new Dimension(850, 350));
+            mainPanel.add(graphPanel, BorderLayout.CENTER);
+
+            mainPanel.add(buildBottomPanel(), BorderLayout.SOUTH);
+            add(mainPanel);
+            addButtonActions();
+            resetTraversal();
+        }
+
+        //design
+        private JPanel buildBottomPanel() {
+            JPanel bottomPanel = new JPanel();
+            bottomPanel.setBackground(DARK);
+            bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
+
+            currentVertexLabel = createLabel("", 15);
+            traversalLabel = createLabel("", 14);
+
+            bottomPanel.add(currentVertexLabel);
+            bottomPanel.add(Box.createVerticalStrut(5));
+            bottomPanel.add(traversalLabel);
+            bottomPanel.add(Box.createVerticalStrut(5));
+
+            JPanel legendPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 3));
+            legendPanel.setBackground(DARK);
+            legendPanel.add(createLegend("Not visited", BLUE));
+            legendPanel.add(createLegend("Processing", YELLOW));
+            legendPanel.add(createLegend("Visited", GRAY));
+            if (!target.isEmpty()) {
+                legendPanel.add(createLegend("Target found", GREEN));
+            }
+            bottomPanel.add(legendPanel);
+
+            playButton = createButton("PLAY", GREEN);
+            resetButton = createButton("RESET", GRAY);
+            backButton = createButton("BACK", GRAY);
+            exitButton = createButton("EXIT", RED);
+
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+            buttonPanel.setBackground(DARK);
+            buttonPanel.add(playButton);
+            buttonPanel.add(resetButton);
+            buttonPanel.add(backButton);
+            buttonPanel.add(exitButton);
+            bottomPanel.add(buttonPanel);
+
+            return bottomPanel;
+        }
+
+        private JLabel createLabel(String text, int size) {
+            JLabel label = new JLabel(text);
+            label.setFont(new Font("Georgia", Font.PLAIN, size + 1));
+            label.setForeground(TEXT);
+            label.setAlignmentX(Component.CENTER_ALIGNMENT);
+            return label;
+        }
+
+        private JButton createButton(String text, Color color) {
+            JButton button = new RoundedButton(text, 24);
+            button.setFont(new Font("Georgia", Font.BOLD, 13));
+            button.setForeground(WHITE);
+            button.setBackground(color);
+            button.setPreferredSize(new Dimension(110, 35));
+            return button;
+        }
+
+        private JLabel createLegend(String text, Color color) {
+            JLabel label = new JLabel("● " + text);
+            label.setFont(new Font("Georgia", Font.BOLD, 12));
+            label.setForeground(color);
+            return label;
+        }
+
+        private void addButtonActions() {
+            playButton.addActionListener(e -> nextStep());
+            resetButton.addActionListener(e -> resetTraversal());
+
+            backButton.addActionListener(e -> {
+                new TreeBuilderFrame.GraphBuilderFrame(graph, directed, start, target);
+                dispose();
+            });
+
+            exitButton.addActionListener(e -> {
+                dispose();
+                SwingUtilities.invokeLater(() -> new Main());
+            });
+        }
+
+        //logic
+        //recursive DFS with a visited set so cycles cannot cause infinite recursion
+        private void buildVisitOrder() {
+            dfs(start, new HashSet<>());
+        }
+
+        private void dfs(String value, Set<String> visited) {
+            if (value == null || visited.contains(value) || !graph.hasVertex(value)) {
+                return;
+            }
+
+            visited.add(value);
+            visitOrder.add(value);
+
+            for (String neighbor : graph.neighbors(value)) {
+                if (!visited.contains(neighbor)) {
+                    reachedFrom.put(neighbor, value);
+                    dfs(neighbor, visited);
+                }
+            }
+        }
+
+        private void nextStep() {
+            if (targetFound) {
+                return;
+            }
+
+            if (stepIndex >= visitOrder.size()) {
+                graphPanel.setCurrentVertex(null);
+                graphPanel.setTraversalEdge(null, null);
+
+                if (target.isEmpty()) {
+                    currentVertexLabel.setForeground(GREEN);
+                    currentVertexLabel.setText("Traversal complete!");
+                } else {
+                    currentVertexLabel.setForeground(RED);
+                    currentVertexLabel.setText("Target \"" + target + "\" was not found.");
+                }
+                return;
+            }
+
+            String vertex = visitOrder.get(stepIndex);
+
+            if (stepIndex > 0) {
+                graphPanel.markVisited(visitOrder.get(stepIndex - 1));
+                graphPanel.setTraversalEdge(reachedFrom.get(vertex), vertex);
+            }
+
+            stepIndex++;
+            graphPanel.setCurrentVertex(vertex);
+
+            currentVertexLabel.setForeground(YELLOW);
+            currentVertexLabel.setText("Currently Processing: " + vertex);
+            updateTraversalLabel();
+
+            if (!target.isEmpty() && vertex.equals(target)) {
+                targetFound = true;
+                graphPanel.markFound(vertex);
+                currentVertexLabel.setForeground(GREEN);
+                currentVertexLabel.setText("Target \"" + target + "\" found at step " + stepIndex + "!");
+            }
+        }
+
+        private void resetTraversal() {
+            stepIndex = 0;
+            targetFound = false;
+
+            graphPanel.reset();
+            currentVertexLabel.setForeground(TEXT);
+            currentVertexLabel.setText("Currently Processing: None");
+            updateTraversalLabel();
+        }
+
+        private void updateTraversalLabel() {
+            StringBuilder text = new StringBuilder();
+            for (int i = 0; i < stepIndex; i++) {
+                if (i > 0) {
+                    text.append(" -> ");
+                }
+                text.append(visitOrder.get(i));
+            }
+            traversalLabel.setText("DFS Path: " + text);
+        }
     }
 }
