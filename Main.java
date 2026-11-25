@@ -3,10 +3,10 @@ import java.awt.*;
 
 public class Main extends JFrame {
 
-    private final Color DARK = new Color(21, 30, 48);
-    private final Color BLUE = new Color(35, 119, 210);
-    private final Color GRAY = new Color(90, 105, 125);
-    private final Color RED = new Color(220, 75, 75);
+    private final Color BG = new Color(255, 228, 236);
+    private final Color TEXT = new Color(122, 52, 82);
+    private final Color PINK = new Color(236, 120, 160);
+    private final Color RIBBON = new Color(200, 70, 90);
     private final Color WHITE = Color.WHITE;
 
     public Main() {
@@ -23,32 +23,33 @@ public class Main extends JFrame {
         setResizable(true);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(DARK);
+        mainPanel.setBackground(BG);
 
         //welcome title
         JLabel title = new JLabel(
-            "<html><center>" + "WELCOME TO<br>" +
-            "<font color='#4DA8FF'>DEPTH-FIRST SEARCH</font><br>" +
-            "<font color='#4DA8FF'>ALGORITHM VISUAL</font>" +
+            "<html><center>" + "Welcome to <br>" +
+            "<font color='#E0709B'>Depth-First Search</font><br>" +
+            "<font color='#E0709B'>Algorithm Visual</font>" +
             "</center></html>", SwingConstants.CENTER);
 
-        title.setFont(new Font("Arial", Font.BOLD, 40));
-        title.setForeground(WHITE);
+        title.setFont(new Font("Segoe Script", Font.BOLD, 38));
+        title.setForeground(TEXT);
         title.setHorizontalAlignment(SwingConstants.CENTER);
 
         JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.setBackground(DARK);
+        centerPanel.setBackground(BG);
         centerPanel.add(title, BorderLayout.CENTER);
 
         mainPanel.add(centerPanel, BorderLayout.CENTER);
 
         //buttons at the bottom
         JPanel buttonPanel = new JPanel(
-            new FlowLayout(FlowLayout.CENTER, 20, 80));
+            new FlowLayout(FlowLayout.CENTER, 20, 50));
 
-        buttonPanel.setBackground(DARK);
- 
-        JButton proceedButton = createButton("PROCEED", BLUE);
+        buttonPanel.setBackground(BG);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 60, 0));
+
+        JButton proceedButton = createButton("PROCEED", PINK);
         proceedButton.addActionListener(e -> {
             TreeBuilderFrame builder = new TreeBuilderFrame();
             if (builder.isReady()) {
@@ -57,12 +58,12 @@ public class Main extends JFrame {
         });
 
         buttonPanel.add(proceedButton);
-        JButton exitButton = createButton("EXIT", RED);
+        JButton exitButton = createButton("EXIT", RIBBON);
 
         exitButton.addActionListener(e -> {
             JOptionPane.showMessageDialog(
                 this,
-                "Thank you for using Depth-First Search Algorithm Visual!"
+                "Thank you for using Depth-First Search Algorithm Visual! ♡"
             );
             System.exit(0);
         });
@@ -76,17 +77,11 @@ public class Main extends JFrame {
 
     //creates a flat & colored button
     private JButton createButton(String text, Color color) {
-        JButton button = new JButton(text);
+        JButton button = new RoundedButton(text, 24);
 
-        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setFont(new Font("Georgia", Font.BOLD, 15));
         button.setForeground(WHITE);
         button.setBackground(color);
-
-        //remove the default button look
-        button.setOpaque(true);
-        button.setContentAreaFilled(true);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
         button.setRolloverEnabled(false);
 
         button.setPreferredSize(new Dimension(220, 45));
