@@ -87,11 +87,8 @@ public class TreeBuilderFrame extends JFrame {
 
     private boolean ready;
 
-    public TreeBuilderFrame() {
-        if (!chooseTreeType()) {
-            dispose();
-            return;
-        }
+    public TreeBuilderFrame(boolean isBST) {
+        this.isBST = isBST;
         ready = true;
         buildFrame();
         showStep(STEP_ROOT);
@@ -150,24 +147,6 @@ public class TreeBuilderFrame extends JFrame {
 
     public boolean isReady() {
         return ready;
-    }
-
-    private boolean chooseTreeType() {
-        String[] options = {"Binary Tree", "Binary Search Tree"};
-
-        int choice = JOptionPane.showOptionDialog(
-            null,
-            "What kind of tree do you want to build?",
-            "Choose Tree Type",
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null, options, options[0]);
-
-        if (choice == -1) {
-            return false;
-        }
-        isBST = (choice == 1);
-        return true;
     }
 
     //design
@@ -785,14 +764,8 @@ public class TreeBuilderFrame extends JFrame {
         private JButton visualizeButton;
         private JButton clearButton;
 
-        public GraphBuilderFrame() {
-            Boolean chosenType = chooseGraphType();
-            if (chosenType == null) {
-                dispose();
-                return;
-            }
-
-            directed = chosenType;
+        public GraphBuilderFrame(boolean directed) {
+            this.directed = directed;
             graph = new Graph(directed);
             ready = true;
 
@@ -821,23 +794,6 @@ public class TreeBuilderFrame extends JFrame {
 
         public boolean isReady() {
             return ready;
-        }
-
-        private Boolean chooseGraphType() {
-            String[] options = {UNDIRECTED, DIRECTED};
-
-            int choice = JOptionPane.showOptionDialog(
-                null,
-                "What kind of graph do you want to build?",
-                "Choose Graph Type",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null, options, options[0]);
-
-            if (choice == -1) {
-                return null;
-            }
-            return choice == 1;
         }
 
         //design
