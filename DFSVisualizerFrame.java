@@ -3,13 +3,14 @@ import java.awt.*;
 
 public class DFSVisualizerFrame extends JFrame {
 
-    private final Color DARK = new Color(21, 30, 48);
-    private final Color BLUE = new Color(35, 119, 210);
-    private final Color GREEN = new Color(35, 180, 120);
-    private final Color YELLOW = new Color(255, 193, 7);
-    private final Color GRAY = new Color(110, 125, 145);
-    private final Color RED = new Color(220, 75, 75);
-    private final Color TEAL = new Color(46, 196, 182);
+    private final Color DARK = new Color(255, 228, 236);
+    private final Color TEXT = new Color(122, 52, 82);
+    private final Color BLUE = new Color(236, 120, 160);
+    private final Color GREEN = new Color(86, 160, 110);
+    private final Color YELLOW = new Color(222, 150, 40);
+    private final Color GRAY = new Color(190, 150, 170);
+    private final Color RED = new Color(200, 70, 90);
+    private final Color TEAL = new Color(200, 90, 130);
     private final Color WHITE = Color.WHITE;
 
     //labels, tree and buttons on the screen
@@ -63,19 +64,19 @@ public class DFSVisualizerFrame extends JFrame {
 
         //screen title
         JLabel title = new JLabel(
-                "DEPTH-FIRST SEARCH VISUALIZATION",
+                "Depth-First Search Visualization",
                 SwingConstants.CENTER
         );
 
-        title.setFont(new Font("Arial", Font.BOLD, 23));
-        title.setForeground(WHITE);
+        title.setFont(new Font("Segoe Script", Font.BOLD, 24));
+        title.setForeground(TEXT);
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel treeTypeLabel = createLabel(
                 "Tree Type: " + (isBST ? "Binary Search Tree" : "Binary Tree"),
                 18
         );
-        treeTypeLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        treeTypeLabel.setFont(new Font("Georgia", Font.BOLD | Font.ITALIC, 18));
         treeTypeLabel.setForeground(TEAL);
 
         JPanel titlePanel = new JPanel();
@@ -100,7 +101,7 @@ public class DFSVisualizerFrame extends JFrame {
         mainPanel.add(buildBottomPanel(), BorderLayout.SOUTH);
         add(mainPanel);
         addButtonActions();
-        resetTraversal();  
+        resetTraversal();
     }
 
     //design
@@ -167,10 +168,10 @@ public class DFSVisualizerFrame extends JFrame {
         JLabel label = new JLabel(text);
 
         label.setFont(
-                new Font("Arial", Font.PLAIN, size)
+                new Font("Georgia", Font.PLAIN, size + 1)
         );
 
-        label.setForeground(WHITE);
+        label.setForeground(TEXT);
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         return label;
@@ -179,17 +180,14 @@ public class DFSVisualizerFrame extends JFrame {
     //flat & colored button
     private JButton createButton(String text, Color color) {
 
-        JButton button = new JButton(text);
+        JButton button = new RoundedButton(text, 24);
 
         button.setFont(
-                new Font("Arial", Font.BOLD, 12)
+                new Font("Georgia", Font.BOLD, 13)
         );
 
         button.setForeground(WHITE);
         button.setBackground(color);
-        button.setOpaque(true);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
         button.setPreferredSize(
                 new Dimension(110, 35)
         );
@@ -203,7 +201,7 @@ public class DFSVisualizerFrame extends JFrame {
         JLabel label = new JLabel("● " + text);
 
         label.setFont(
-                new Font("Arial", Font.BOLD, 11)
+                new Font("Georgia", Font.BOLD, 12)
         );
 
         label.setForeground(color);
@@ -218,7 +216,7 @@ public class DFSVisualizerFrame extends JFrame {
         playButton.addActionListener(e -> nextStep());
         //RESET
         resetButton.addActionListener(e -> resetTraversal());
-        //BACK 
+        //BACK
         backButton.addActionListener(e -> {
             new TreeBuilderFrame(root, isBST, startNode.value, target, order);
             dispose();
@@ -337,7 +335,7 @@ public class DFSVisualizerFrame extends JFrame {
 
         treePanel.reset();
 
-        currentNodeLabel.setForeground(WHITE);
+        currentNodeLabel.setForeground(TEXT);
 
         currentNodeLabel.setText(
                 "Currently Processing: None"
@@ -346,7 +344,7 @@ public class DFSVisualizerFrame extends JFrame {
         updateTraversalLabel();
     }
 
-    //shows the nodes visited 
+    //shows the nodes visited
     private void updateTraversalLabel() {
 
         String text = "";
@@ -354,7 +352,7 @@ public class DFSVisualizerFrame extends JFrame {
         for (int i = 0; i < stepIndex; i++) {
 
             if (i > 0) {
-                text += " → ";
+                text += " -> ";
             }
 
             text += visitOrder.get(i).value;
