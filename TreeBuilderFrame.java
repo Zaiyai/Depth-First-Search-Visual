@@ -744,7 +744,6 @@ public class TreeBuilderFrame extends JFrame {
 
         //inputs
         private JTextField vertexInput;
-        private JComboBox<String> typeCombo;
         private JComboBox<String> startCombo;
         private JComboBox<String> targetCombo;
 
@@ -764,7 +763,6 @@ public class TreeBuilderFrame extends JFrame {
         private JButton editVerticesButton;
         private JButton removeEdgeButton;
         private JButton visualizeButton;
-        private JButton clearButton;
 
         public GraphBuilderFrame(boolean directed) {
             this.directed = directed;
@@ -787,7 +785,6 @@ public class TreeBuilderFrame extends JFrame {
             buildFrame();
             addButtonActions();
 
-            typeCombo.setSelectedItem(directed ? DIRECTED : UNDIRECTED);
             startCombo.setSelectedItem(start);
             targetCombo.setSelectedItem(target == null || target.isEmpty() ? NONE : target);
 
@@ -861,7 +858,6 @@ public class TreeBuilderFrame extends JFrame {
 
         private JPanel buildInputCard() {
             vertexInput = createTextField();
-            typeCombo = createComboBox(new String[]{UNDIRECTED, DIRECTED});
             startCombo = createComboBox(new String[0]);
             targetCombo = createComboBox(new String[]{NONE});
 
@@ -872,7 +868,6 @@ public class TreeBuilderFrame extends JFrame {
             removeEdgeButton = createButton("REMOVE EDGE", RED);
             editVerticesButton = createButton("EDIT VERTICES", BLUE);
             visualizeButton = createButton("VISUALIZE DFS", GREEN);
-            clearButton = createButton("CLEAR GRAPH", GRAY);
             editVerticesButton.setVisible(false);
 
             vertexList = new JList<>(vertexModel);
@@ -898,7 +893,6 @@ public class TreeBuilderFrame extends JFrame {
             inputPanel.setBackground(WHITE);
             inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
 
-            inputPanel.add(buildTypeSection());
             inputPanel.add(buildVertexSection());
             inputPanel.add(buildEdgeSection());
             inputPanel.add(buildDfsSection());
@@ -927,14 +921,6 @@ public class TreeBuilderFrame extends JFrame {
             card.add(scrollPane, BorderLayout.CENTER);
 
             return card;
-        }
-
-        private JPanel buildTypeSection() {
-            JPanel section = createSection();
-            section.add(createLabel("Graph Type:"));
-            section.add(space(GAP_SMALL));
-            section.add(typeCombo);
-            return section;
         }
 
         private JPanel buildVertexSection() {
@@ -998,8 +984,6 @@ public class TreeBuilderFrame extends JFrame {
             dfsSettingsSection.add(visualizeButton);
             section.add(dfsSettingsSection);
 
-            section.add(space(GAP_SMALL));
-            section.add(clearButton);
             return section;
         }
 
@@ -1085,7 +1069,6 @@ public class TreeBuilderFrame extends JFrame {
 
         //functionalities
         private void addButtonActions() {
-            typeCombo.addActionListener(e -> changeGraphType());
             addVertexButton.addActionListener(e -> addVertex());
             renameButton.addActionListener(e -> renameVertex());
             deleteVertexButton.addActionListener(e -> deleteVertex());
@@ -1093,7 +1076,6 @@ public class TreeBuilderFrame extends JFrame {
             editVerticesButton.addActionListener(e -> setVertexEntryMode(true));
             removeEdgeButton.addActionListener(e -> removeEdge());
             visualizeButton.addActionListener(e -> visualizeDFS());
-            clearButton.addActionListener(e -> clearGraph());
             graphPanel.setEdgeCreationHandler(this::addConnection);
         }
 
@@ -1121,19 +1103,6 @@ public class TreeBuilderFrame extends JFrame {
 
         private String typeName() {
             return directed ? DIRECTED : UNDIRECTED;
-        }
-
-        private void changeGraphType() {
-            String selected = (String) typeCombo.getSelectedItem();
-            boolean newDirection = DIRECTED.equals(selected);
-
-            if (newDirection == directed) {
-                return;
-            }
-
-            directed = newDirection;
-            graph.setDirected(directed);
-            refreshAll();
         }
 
         private String readVertexInput() {
@@ -1224,22 +1193,6 @@ public class TreeBuilderFrame extends JFrame {
             graph.removeEdge(selected.from, selected.to);
             refreshAll();
             graphPanel.setTraversalEdge(null, null);
-        }
-
-        private void clearGraph() {
-            int answer = JOptionPane.showConfirmDialog(
-                this,
-                "Remove all vertices and edges?",
-                "Clear Graph",
-                JOptionPane.YES_NO_OPTION);
-
-            if (answer == JOptionPane.YES_OPTION) {
-                graph.clear();
-                vertexInput.setText("");
-                graphPanel.reset();
-                refreshAll();
-                setVertexEntryMode(true);
-            }
         }
 
         private void visualizeDFS() {
