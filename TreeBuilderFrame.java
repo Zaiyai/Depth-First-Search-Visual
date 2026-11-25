@@ -1,27 +1,36 @@
 import javax.swing.*;
+import javax.swing.border.AbstractBorder;
+import javax.swing.plaf.basic.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 public class TreeBuilderFrame extends JFrame {
 
-    private static final Color DARK = new Color(21, 30, 48);
-    private static final Color FIELD_BG = new Color(31, 43, 66);
-    private static final Color BLUE = new Color(35, 119, 210);
-    private static final Color GREEN = new Color(35, 180, 120);
-    private static final Color RED = new Color(220, 75, 75);
-    private static final Color GRAY = new Color(90, 105, 125);
-    private static final Color YELLOW = new Color(255, 193, 7);
-    private static final Color TEAL = new Color(46, 196, 182);
+    private static final Color DARK = new Color(122, 52, 82);
+    private static final Color BG = new Color(255, 228, 236);
+    private static final Color FIELD_BG = new Color(255, 240, 245);
+    private static final Color FIELD_BORDER = new Color(240, 190, 208);
+    private static final Color BLUE = new Color(236, 120, 160);
+    private static final Color GREEN = new Color(86, 160, 110);
+    private static final Color RED = new Color(200, 70, 90);
+    private static final Color GRAY = new Color(190, 150, 170);
+    private static final Color AMBER = new Color(214, 84, 130);
+    private static final Color TEAL = new Color(200, 90, 130);
     private static final Color WHITE = Color.WHITE;
 
-    private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 30);
-    private static final Font SECTION_FONT = new Font("SansSerif", Font.BOLD, 14);
-    private static final Font LABEL_FONT = new Font("SansSerif", Font.BOLD, 14);
-    private static final Font FIELD_FONT = new Font("SansSerif", Font.PLAIN, 16);
-    private static final Font BUTTON_FONT = new Font("SansSerif", Font.BOLD, 13);
-    private static final Font TREE_TYPE_FONT = new Font("SansSerif", Font.BOLD, 17);
+    private static final Font TITLE_FONT = new Font("Segoe Script", Font.BOLD, 32);
+    private static final Font SECTION_FONT = new Font("Georgia", Font.BOLD, 15);
+    private static final Font LABEL_FONT = new Font("Georgia", Font.BOLD | Font.ITALIC, 15);
+    private static final Font FIELD_FONT = new Font("Arial", Font.PLAIN, 16);
+    private static final Font BUTTON_FONT = new Font("Georgia", Font.BOLD, 14);
+    private static final Font TREE_TYPE_FONT = new Font("Georgia", Font.BOLD | Font.ITALIC, 18);
 
     //sizes and spacing
     private static final int CONTROL_HEIGHT = 40;
+    private static final int CONTROL_RADIUS = 12;
+    private static final int BUTTON_RADIUS = 24;
+    private static final int BOX_RADIUS = 24;
 
     private static final int GAP_SMALL = 6;
     private static final int GAP_MEDIUM = 10;
@@ -119,16 +128,16 @@ public class TreeBuilderFrame extends JFrame {
         setResizable(true);
 
         JPanel mainPanel = new JPanel(new BorderLayout(0, 15));
-        mainPanel.setBackground(DARK);
+        mainPanel.setBackground(BG);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 25, 25, 25));
 
-        JLabel title = new JLabel("BUILD THE TREE!", SwingConstants.CENTER);
+        JLabel title = new JLabel("Build the Tree!", SwingConstants.CENTER);
         title.setFont(TITLE_FONT);
-        title.setForeground(WHITE);
+        title.setForeground(DARK);
         mainPanel.add(title, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel(new GridLayout(1, 2, 20, 0));
-        centerPanel.setBackground(DARK);
+        centerPanel.setBackground(BG);
         centerPanel.add(buildPreviewCard());
         centerPanel.add(buildInputCard());
         mainPanel.add(centerPanel, BorderLayout.CENTER);
@@ -169,8 +178,11 @@ public class TreeBuilderFrame extends JFrame {
         treeTypeLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, GAP_MEDIUM, 0));
 
         JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(DARK);
-        addCardBorder(card, "TREE PREVIEW");
+        card.setBackground(BG);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            new RoundedBorder(BLUE, BOX_RADIUS),
+            BorderFactory.createEmptyBorder(10, 18, 18, 18)
+        ));
         card.add(treeTypeLabel, BorderLayout.NORTH);
         card.add(treePanel, BorderLayout.CENTER);
 
@@ -195,10 +207,10 @@ public class TreeBuilderFrame extends JFrame {
         noButton = createButton("NO", GRAY);
         addButton = createButton("ADD CHILDREN", BLUE);
         cancelChildButton = createButton("CANCEL", RED);
-        finishButton = createButton("START DFS", GREEN);
+        finishButton = createButton("VISUALIZE DFS", GREEN);
 
         parentLabel = createLabel("Waiting for root...");
-        parentLabel.setForeground(YELLOW);
+        parentLabel.setForeground(AMBER);
 
         buildRootSection();
         buildQuestionSection();
@@ -207,7 +219,7 @@ public class TreeBuilderFrame extends JFrame {
 
         JPanel inputPanel = new JPanel();
         inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
-        inputPanel.setBackground(DARK);
+        inputPanel.setBackground(WHITE);
         inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
 
         //root
@@ -226,7 +238,7 @@ public class TreeBuilderFrame extends JFrame {
         //keeps the controls centered & scrolls if too tall
         JPanel centerWrapper = new CenteredScrollPanel();
         centerWrapper.setLayout(new GridBagLayout());
-        centerWrapper.setBackground(DARK);
+        centerWrapper.setBackground(WHITE);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
@@ -240,12 +252,12 @@ public class TreeBuilderFrame extends JFrame {
             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getViewport().setBackground(DARK);
+        scrollPane.setBackground(WHITE);
+        scrollPane.getViewport().setBackground(WHITE);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(DARK);
-        addCardBorder(card, "TREE INPUT");
+        JPanel card = new RoundedPanel(new BorderLayout(), WHITE, BOX_RADIUS);
+        card.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
         card.add(scrollPane, BorderLayout.CENTER);
 
         return card;
@@ -255,7 +267,7 @@ public class TreeBuilderFrame extends JFrame {
     private JPanel createSection() {
         JPanel section = new JPanel();
         section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
-        section.setBackground(DARK);
+        section.setBackground(WHITE);
         section.setAlignmentX(Component.LEFT_ALIGNMENT);
         return section;
     }
@@ -271,7 +283,7 @@ public class TreeBuilderFrame extends JFrame {
 
     private void buildQuestionSection() {
         JPanel choicePanel = new JPanel(new GridLayout(1, 2, 10, 0));
-        choicePanel.setBackground(DARK);
+        choicePanel.setBackground(WHITE);
         choicePanel.add(yesButton);
         choicePanel.add(noButton);
         makeFullWidth(choicePanel);
@@ -287,7 +299,7 @@ public class TreeBuilderFrame extends JFrame {
 
     private void buildChildPanel() {
         JPanel buttonRow = new JPanel(new GridLayout(1, 2, 10, 0));
-        buttonRow.setBackground(DARK);
+        buttonRow.setBackground(WHITE);
         buttonRow.add(addButton);
         buttonRow.add(cancelChildButton);
         makeFullWidth(buttonRow);
@@ -348,7 +360,7 @@ public class TreeBuilderFrame extends JFrame {
                 title,
                 0, 0,
                 SECTION_FONT,
-                WHITE
+                DARK
             ),
             BorderFactory.createEmptyBorder(10, 18, 18, 18)
         ));
@@ -357,51 +369,38 @@ public class TreeBuilderFrame extends JFrame {
     private JLabel createLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(LABEL_FONT);
-        label.setForeground(WHITE);
+        label.setForeground(DARK);
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         return label;
     }
 
     private JTextField createTextField() {
-        JTextField field = new JTextField();
+        JTextField field = new RoundedTextField(FIELD_BORDER, BLUE, CONTROL_RADIUS);
         field.setFont(FIELD_FONT);
-        field.setForeground(WHITE);
+        field.setForeground(DARK);
         field.setBackground(FIELD_BG);
-        field.setCaretColor(WHITE);
+        field.setCaretColor(DARK);
         field.setDisabledTextColor(GRAY);
         field.setHorizontalAlignment(JTextField.CENTER);
-        field.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(GRAY),
-            BorderFactory.createEmptyBorder(4, 8, 4, 8)
-        ));
         makeFullWidth(field);
         return field;
     }
 
     private JComboBox<String> createComboBox(String[] items) {
-        JComboBox<String> combo = new JComboBox<>(items);
+        JComboBox<String> combo = new RoundedComboBox(items, FIELD_BORDER, BLUE, CONTROL_RADIUS);
         combo.setFont(FIELD_FONT);
         combo.setForeground(DARK);
-        combo.setBackground(WHITE);
+        combo.setBackground(FIELD_BG);
         makeFullWidth(combo);
         return combo;
     }
 
     private JButton createButton(String text, Color color) {
-        JButton button = new JButton(text) {
-            @Override
-            public void setEnabled(boolean enabled) {
-                super.setEnabled(enabled);
-                setBackground(enabled ? color : color.darker().darker());
-            }
-        };
+        JButton button = new RoundedButton(text, BUTTON_RADIUS);
 
         button.setFont(BUTTON_FONT);
         button.setForeground(WHITE);
         button.setBackground(color);
-        button.setOpaque(true);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
         makeFullWidth(button);
         return button;
     }
@@ -758,5 +757,256 @@ class CenteredScrollPanel extends JPanel implements Scrollable {
     public boolean getScrollableTracksViewportHeight() {
         return getParent() instanceof JViewport
             && getParent().getHeight() > getPreferredSize().height;
+    }
+}
+
+class RoundedPanel extends JPanel {
+
+    private final int radius;
+
+    public RoundedPanel(LayoutManager layout, Color background, int radius) {
+        super(layout);
+        this.radius = radius;
+        setBackground(background);
+        setOpaque(false);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(getBackground());
+        g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
+        g2.dispose();
+    }
+}
+
+class RoundedTextField extends JTextField {
+
+    private final Color borderColor;
+    private final Color focusColor;
+    private final int radius;
+
+    public RoundedTextField(Color borderColor, Color focusColor, int radius) {
+        this.borderColor = borderColor;
+        this.focusColor = focusColor;
+        this.radius = radius;
+
+        setOpaque(false);
+        setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
+
+        addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                repaint();
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                repaint();
+            }
+        });
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(getBackground());
+        g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, radius, radius);
+        g2.setColor(hasFocus() ? focusColor : borderColor);
+        g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, radius, radius);
+        g2.dispose();
+        super.paintComponent(g);
+    }
+}
+
+class RoundedButton extends JButton {
+
+    private final int radius;
+
+    public RoundedButton(String text, int radius) {
+        super(text);
+        this.radius = radius;
+        setContentAreaFilled(false);
+        setOpaque(false);
+        setFocusPainted(false);
+        setBorderPainted(false);
+        setRolloverEnabled(true);
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+        Color base = getBackground();
+        Color fill = base;
+        Color text = getForeground();
+
+        if (!isEnabled()) {
+            fill = blend(base, Color.WHITE, 0.6f);
+            text = blend(base, Color.WHITE, 0.2f);
+        } else if (getModel().isPressed()) {
+            fill = base.darker();
+        } else if (getModel().isRollover()) {
+            fill = blend(base, Color.WHITE, 0.15f);
+        }
+
+        g2.setColor(fill);
+        g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
+
+        g2.setColor(text);
+        g2.setFont(getFont());
+        FontMetrics fm = g2.getFontMetrics();
+        int x = (getWidth() - fm.stringWidth(getText())) / 2;
+        int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+        g2.drawString(getText(), x, y);
+        g2.dispose();
+    }
+
+    private static Color blend(Color from, Color to, float amount) {
+        int red = Math.round(from.getRed() + (to.getRed() - from.getRed()) * amount);
+        int green = Math.round(from.getGreen() + (to.getGreen() - from.getGreen()) * amount);
+        int blue = Math.round(from.getBlue() + (to.getBlue() - from.getBlue()) * amount);
+        return new Color(red, green, blue);
+    }
+}
+
+class RoundedComboBox extends JComboBox<String> {
+
+    private final Color borderColor;
+    private final Color focusColor;
+    private final int radius;
+
+    public RoundedComboBox(String[] items, Color borderColor, Color focusColor, int radius) {
+        super(items);
+        this.borderColor = borderColor;
+        this.focusColor = focusColor;
+        this.radius = radius;
+
+        setUI(new FlatComboBoxUI(focusColor, borderColor));
+        setOpaque(false);
+        setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+
+        setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setHorizontalAlignment(SwingConstants.CENTER);
+                setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+                return this;
+            }
+        });
+
+        addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                repaint();
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                repaint();
+            }
+        });
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(getBackground());
+        g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, radius, radius);
+        g2.setColor(hasFocus() ? focusColor : borderColor);
+        g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, radius, radius);
+        g2.dispose();
+        super.paintComponent(g);
+    }
+}
+
+class FlatComboBoxUI extends BasicComboBoxUI {
+
+    private final Color arrowColor;
+    private final Color popupBorderColor;
+
+    public FlatComboBoxUI(Color arrowColor, Color popupBorderColor) {
+        this.arrowColor = arrowColor;
+        this.popupBorderColor = popupBorderColor;
+    }
+
+    @Override
+    protected JButton createArrowButton() {
+        JButton button = new JButton() {
+            @Override
+            public void paint(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(arrowColor);
+                int cx = getWidth() / 2;
+                int cy = getHeight() / 2;
+                g2.fillPolygon(new int[]{cx - 5, cx + 5, cx}, new int[]{cy - 2, cy - 2, cy + 3}, 3);
+                g2.dispose();
+            }
+        };
+        button.setBorder(BorderFactory.createEmptyBorder());
+        button.setContentAreaFilled(false);
+        button.setFocusable(false);
+        return button;
+    }
+
+    @Override
+    protected ComboPopup createPopup() {
+        BasicComboPopup popup = (BasicComboPopup) super.createPopup();
+        popup.setBorder(BorderFactory.createLineBorder(popupBorderColor));
+        return popup;
+    }
+
+    @Override
+    public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
+    }
+
+    @Override
+    public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
+        ListCellRenderer<Object> renderer = comboBox.getRenderer();
+        Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
+        c.setFont(comboBox.getFont());
+        c.setForeground(comboBox.getForeground());
+        c.setBackground(comboBox.getBackground());
+        currentValuePane.paintComponent(g, c, comboBox, bounds.x, bounds.y, bounds.width, bounds.height, false);
+    }
+}
+
+class RoundedBorder extends AbstractBorder {
+
+    private final Color color;
+    private final int radius;
+
+    public RoundedBorder(Color color, int radius) {
+        this.color = color;
+        this.radius = radius;
+    }
+
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(color);
+        g2.drawRoundRect(x, y, width - 1, height - 1, radius, radius);
+        g2.dispose();
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+        return new Insets(1, 1, 1, 1);
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c, Insets insets) {
+        insets.set(1, 1, 1, 1);
+        return insets;
     }
 }
