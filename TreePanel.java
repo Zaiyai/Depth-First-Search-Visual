@@ -3,13 +3,14 @@ import java.awt.*;
 
 public class TreePanel extends JPanel {
 
-    private final Color DARK = new Color(21, 30, 48);
-    private final Color BLUE = new Color(35, 119, 210);
-    private final Color YELLOW = new Color(255, 193, 7);
-    private final Color GREEN = new Color(35, 180, 120);
-    private final Color GRAY = new Color(110, 125, 145);
-    private final Color PURPLE = new Color(176, 124, 255);
-    private final Color ORANGE = new Color(255, 140, 0);
+    private final Color DARK = new Color(255, 246, 249);
+    private final Color BLUE = new Color(236, 120, 160);
+    private final Color YELLOW = new Color(222, 150, 40);
+    private final Color GREEN = new Color(86, 160, 110);
+    private final Color GRAY = new Color(190, 150, 170);
+    private final Color PURPLE = new Color(160, 110, 200);
+    private final Color ORANGE = new Color(200, 70, 90);
+    private final Color EDGE = new Color(240, 170, 196);
     private final Color WHITE = Color.WHITE;
 
     //drawing limits
@@ -45,6 +46,7 @@ public class TreePanel extends JPanel {
         g2.setRenderingHint(
             RenderingHints.KEY_ANTIALIASING,
             RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setStroke(new BasicStroke(2f));
 
         //recompute the layout on every refresh
         order.clear();
@@ -82,7 +84,7 @@ public class TreePanel extends JPanel {
         if (node == null) return;
 
         Point p = positionOf(node, xStep, yStep);
-        g2.setColor(WHITE);
+        g2.setColor(EDGE);
 
         if (node.left != null) {
             Point c = positionOf(node.left, xStep, yStep);
@@ -115,6 +117,7 @@ public class TreePanel extends JPanel {
 
         g2.setColor(color);
         g2.fillOval(p.x - radius, p.y - radius, radius * 2, radius * 2);
+
         g2.setColor(WHITE);
         g2.drawOval(p.x - radius, p.y - radius, radius * 2, radius * 2);
 
