@@ -760,7 +760,6 @@ public class TreeBuilderFrame extends JFrame {
         private JButton renameButton;
         private JButton deleteVertexButton;
         private JButton finishVerticesButton;
-        private JButton editVerticesButton;
         private JButton removeEdgeButton;
         private JButton visualizeButton;
 
@@ -866,9 +865,7 @@ public class TreeBuilderFrame extends JFrame {
             deleteVertexButton = createButton("DELETE VERTEX", RED);
             finishVerticesButton = createButton("DONE ADDING VERTICES", GREEN);
             removeEdgeButton = createButton("REMOVE EDGE", RED);
-            editVerticesButton = createButton("EDIT VERTICES", BLUE);
             visualizeButton = createButton("VISUALIZE DFS", GREEN);
-            editVerticesButton.setVisible(false);
 
             vertexList = new JList<>(vertexModel);
             styleList(vertexList);
@@ -962,8 +959,6 @@ public class TreeBuilderFrame extends JFrame {
 
             section.add(space(GAP_SMALL));
             section.add(removeEdgeButton);
-            section.add(space(GAP_MEDIUM));
-            section.add(editVerticesButton);
             edgeSection = section;
             return section;
         }
@@ -1073,7 +1068,6 @@ public class TreeBuilderFrame extends JFrame {
             renameButton.addActionListener(e -> renameVertex());
             deleteVertexButton.addActionListener(e -> deleteVertex());
             finishVerticesButton.addActionListener(e -> finishAddingVertices());
-            editVerticesButton.addActionListener(e -> setVertexEntryMode(true));
             removeEdgeButton.addActionListener(e -> removeEdge());
             visualizeButton.addActionListener(e -> visualizeDFS());
             graphPanel.setEdgeCreationHandler(this::addConnection);
@@ -1090,7 +1084,6 @@ public class TreeBuilderFrame extends JFrame {
         private void setVertexEntryMode(boolean enabled) {
             vertexSection.setVisible(enabled);
             edgeSection.setVisible(!enabled);
-            editVerticesButton.setVisible(!enabled);
             dfsSettingsSection.setVisible(!enabled);
             graphPanel.setEdgeCreationEnabled(!enabled);
             revalidate();
