@@ -754,6 +754,7 @@ public class TreeBuilderFrame extends JFrame {
         private JList<Graph.Edge> edgeList;
         private JPanel vertexSection;
         private JPanel edgeSection;
+        private JPanel dfsSettingsSection;
 
         //buttons
         private JButton addVertexButton;
@@ -975,26 +976,28 @@ public class TreeBuilderFrame extends JFrame {
 
             section.add(space(GAP_SMALL));
             section.add(removeEdgeButton);
+            section.add(space(GAP_MEDIUM));
+            section.add(editVerticesButton);
             edgeSection = section;
             return section;
         }
 
         private JPanel buildDfsSection() {
             JPanel section = createSection();
-            section.add(space(GAP_MEDIUM));
-            section.add(createLabel("Starting Vertex:"));
-            section.add(space(GAP_SMALL));
-            section.add(startCombo);
+            dfsSettingsSection = createSection();
+            dfsSettingsSection.add(space(GAP_MEDIUM));
+            dfsSettingsSection.add(createLabel("Starting Vertex:"));
+            dfsSettingsSection.add(space(GAP_SMALL));
+            dfsSettingsSection.add(startCombo);
 
-            section.add(space(GAP_MEDIUM));
-            section.add(createLabel("Target Vertex (optional):"));
-            section.add(space(GAP_SMALL));
-            section.add(targetCombo);
+            dfsSettingsSection.add(space(GAP_MEDIUM));
+            dfsSettingsSection.add(createLabel("Target Vertex (optional):"));
+            dfsSettingsSection.add(space(GAP_SMALL));
+            dfsSettingsSection.add(targetCombo);
+            dfsSettingsSection.add(space(GAP_LARGE));
+            dfsSettingsSection.add(visualizeButton);
+            section.add(dfsSettingsSection);
 
-            section.add(space(GAP_MEDIUM));
-            section.add(editVerticesButton);
-            section.add(space(GAP_LARGE));
-            section.add(visualizeButton);
             section.add(space(GAP_SMALL));
             section.add(clearButton);
             return section;
@@ -1106,6 +1109,7 @@ public class TreeBuilderFrame extends JFrame {
             vertexSection.setVisible(enabled);
             edgeSection.setVisible(!enabled);
             editVerticesButton.setVisible(!enabled);
+            dfsSettingsSection.setVisible(!enabled);
             graphPanel.setEdgeCreationEnabled(!enabled);
             revalidate();
             repaint();
