@@ -4,6 +4,9 @@ import javax.swing.plaf.basic.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class TreeBuilderFrame extends JFrame {
 
@@ -713,6 +716,803 @@ public class TreeBuilderFrame extends JFrame {
         if (node.value.equals(value)) return node;
         TreeNode found = findNode(node.left, value);
         return (found != null) ? found : findNode(node.right, value);
+    }
+
+
+    //screen for adding and editing a general graph before running DFS
+    public static class GraphBuilderFrame extends JFrame {
+
+        private static final Color DARK = new Color(122, 52, 82);
+        private static final Color BG = new Color(255, 228, 236);
+        private static final Color FIELD_BG = new Color(255, 240, 245);
+        private static final Color FIELD_BORDER = new Color(240, 190, 208);
+        private static final Color BLUE = new Color(236, 120, 160);
+        private static final Color GREEN = new Color(86, 160, 110);
+        private static final Color RED = new Color(200, 70, 90);
+        private static final Color GRAY = new Color(190, 150, 170);
+        private static final Color AMBER = new Color(214, 84, 130);
+        private static final Color TEAL = new Color(200, 90, 130);
+        private static final Color WHITE = Color.WHITE;
+
+        private static final Font TITLE_FONT = new Font("Segoe Script", Font.BOLD, 32);
+        private static final Font TYPE_FONT = new Font("Georgia", Font.BOLD | Font.ITALIC, 18);
+        private static final Font STATUS_FONT = new Font("Georgia", Font.ITALIC, 14);
+        private static final Font LABEL_FONT = new Font("Georgia", Font.BOLD | Font.ITALIC, 15);
+        private static final Font FIELD_FONT = new Font("Arial", Font.PLAIN, 16);
+        private static final Font BUTTON_FONT = new Font("Georgia", Font.BOLD, 14);
+
+        private static final int CONTROL_HEIGHT = 40;
+        private static final int CONTROL_RADIUS = 12;
+        private static final int BUTTON_RADIUS = 24;
+        private static final int BOX_RADIUS = 24;
+        private static final int GAP_SMALL = 6;
+        private static final int GAP_MEDIUM = 10;
+        private static final int GAP_LARGE = 15;
+
+        private static final String NONE = "<None>";
+        private static final String UNDIRECTED = "Undirected Graph";
+        private static final String DIRECTED = "Directed Graph";
+
+        //graph data and state
+        private Graph graph;
+        private boolean directed;
+        private boolean ready;
+
+        //preview
+        private TreePanel.GraphPanel graphPanel;
+        private JLabel typeLabel;
+        private JLabel statusLabel;
+
+        //inputs
+        private JTextField vertexInput;
+        private JComboBox<String> typeCombo;
+        private JComboBox<String> fromCombo;
+        private JComboBox<String> toCombo;
+        private JComboBox<String> startCombo;
+        private JComboBox<String> targetCombo;
+
+        private final DefaultListModel<String> vertexModel = new DefaultListModel<>();
+        private final DefaultListModel<Graph.Edge> edgeModel = new DefaultListModel<>();
+        private JList<String> vertexList;
+        private JList<Graph.Edge> edgeList;
+
+        //buttons
+        private JButton addVertexButton;
+        private JButton renameButton;
+        private JButton deleteVertexButton;
+        private JButton addEdgeButton;
+        private JButton removeEdgeButton;
+        private JButton visualizeButton;
+        private JButton clearButton;
+
+        public GraphBuilderFrame() {
+            Boolean chosenType = chooseGraphType();
+            if (chosenType == null) {
+                dispose();
+                return;
+            }
+
+            directed = chosenType;
+            graph = new Graph(directed);
+            ready = true;
+
+            buildFrame();
+            addButtonActions();
+            refreshAll();
+            setVisible(true);
+        }
+
+        //used when returning from the visualizer so the graph can be edited again
+        public GraphBuilderFrame(Graph graph, boolean directed, String start, String target) {
+            this.graph = graph;
+            this.directed = directed;
+            this.ready = true;
+
+            buildFrame();
+            addButtonActions();
+
+            typeCombo.setSelectedItem(directed ? DIRECTED : UNDIRECTED);
+            startCombo.setSelectedItem(start);
+            targetCombo.setSelectedItem(target == null || target.isEmpty() ? NONE : target);
+
+            refreshAll();
+            setVisible(true);
+        }
+
+        public boolean isReady() {
+            return ready;
+        }
+
+        private Boolean chooseGraphType() {
+            String[] options = {UNDIRECTED, DIRECTED};
+
+            int choice = JOptionPane.showOptionDialog(
+                null,
+                "What kind of graph do you want to build?",
+                "Choose Graph Type",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null, options, options[0]);
+
+            if (choice == -1) {
+                return null;
+            }
+            return choice == 1;
+        }
+
+        //design
+        private void buildFrame() {
+            setTitle("DFS Algorithm");
+            setSize(1100, 650);
+            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            setLocationRelativeTo(null);
+            setResizable(true);
+
+            JPanel mainPanel = new JPanel(new BorderLayout(0, 15));
+            mainPanel.setBackground(BG);
+            mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 25, 25, 25));
+
+            JLabel title = new JLabel("Build the Graph!", SwingConstants.CENTER);
+            title.setFont(TITLE_FONT);
+            title.setForeground(DARK);
+            mainPanel.add(title, BorderLayout.NORTH);
+
+            JPanel centerPanel = new JPanel(new GridLayout(1, 2, 20, 0));
+            centerPanel.setBackground(BG);
+            centerPanel.add(buildPreviewCard());
+            centerPanel.add(buildInputCard());
+            mainPanel.add(centerPanel, BorderLayout.CENTER);
+
+            add(mainPanel);
+        }
+
+        private JPanel buildPreviewCard() {
+            graphPanel = new TreePanel.GraphPanel();
+
+            typeLabel = createLabel("Graph Type: " + typeName());
+            typeLabel.setFont(TYPE_FONT);
+            typeLabel.setForeground(TEAL);
+            typeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            statusLabel = createLabel("");
+            statusLabel.setFont(STATUS_FONT);
+            statusLabel.setForeground(DARK);
+            statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            JPanel heading = new JPanel();
+            heading.setLayout(new BoxLayout(heading, BoxLayout.Y_AXIS));
+            heading.setBackground(BG);
+            heading.add(typeLabel);
+            heading.add(Box.createVerticalStrut(GAP_SMALL));
+            heading.add(statusLabel);
+            heading.add(Box.createVerticalStrut(GAP_MEDIUM));
+
+            JPanel card = new JPanel(new BorderLayout());
+            card.setBackground(BG);
+            card.setBorder(BorderFactory.createCompoundBorder(
+                new RoundedBorder(BLUE, BOX_RADIUS),
+                BorderFactory.createEmptyBorder(10, 18, 18, 18)
+            ));
+            card.add(heading, BorderLayout.NORTH);
+            card.add(graphPanel, BorderLayout.CENTER);
+
+            return card;
+        }
+
+        private JPanel buildInputCard() {
+            vertexInput = createTextField();
+            typeCombo = createComboBox(new String[]{UNDIRECTED, DIRECTED});
+            fromCombo = createComboBox(new String[0]);
+            toCombo = createComboBox(new String[0]);
+            startCombo = createComboBox(new String[0]);
+            targetCombo = createComboBox(new String[]{NONE});
+
+            addVertexButton = createButton("ADD VERTEX", BLUE);
+            renameButton = createButton("RENAME", AMBER);
+            deleteVertexButton = createButton("DELETE VERTEX", RED);
+            addEdgeButton = createButton("ADD EDGE", BLUE);
+            removeEdgeButton = createButton("REMOVE EDGE", RED);
+            visualizeButton = createButton("VISUALIZE DFS", GREEN);
+            clearButton = createButton("CLEAR GRAPH", GRAY);
+
+            vertexList = new JList<>(vertexModel);
+            styleList(vertexList);
+
+            edgeList = new JList<>(edgeModel);
+            styleList(edgeList);
+            edgeList.setCellRenderer(new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                              boolean isSelected, boolean cellHasFocus) {
+                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    if (value instanceof Graph.Edge) {
+                        Graph.Edge edge = (Graph.Edge) value;
+                        setText(edge.label(directed));
+                    }
+                    return this;
+                }
+            });
+
+            JPanel inputPanel = new JPanel();
+            inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
+            inputPanel.setBackground(WHITE);
+            inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+
+            inputPanel.add(buildTypeSection());
+            inputPanel.add(buildVertexSection());
+            inputPanel.add(buildEdgeSection());
+            inputPanel.add(buildDfsSection());
+
+            JPanel centerWrapper = new CenteredScrollPanel();
+            centerWrapper.setLayout(new GridBagLayout());
+            centerWrapper.setBackground(WHITE);
+
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.weightx = 1;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.anchor = GridBagConstraints.CENTER;
+            centerWrapper.add(inputPanel, gbc);
+
+            JScrollPane scrollPane = new JScrollPane(
+                centerWrapper,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            scrollPane.setBorder(BorderFactory.createEmptyBorder());
+            scrollPane.setBackground(WHITE);
+            scrollPane.getViewport().setBackground(WHITE);
+            scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+            JPanel card = new RoundedPanel(new BorderLayout(), WHITE, BOX_RADIUS);
+            card.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
+            card.add(scrollPane, BorderLayout.CENTER);
+
+            return card;
+        }
+
+        private JPanel buildTypeSection() {
+            JPanel section = createSection();
+            section.add(createLabel("Graph Type:"));
+            section.add(space(GAP_SMALL));
+            section.add(typeCombo);
+            return section;
+        }
+
+        private JPanel buildVertexSection() {
+            JPanel section = createSection();
+            section.add(space(GAP_MEDIUM));
+            section.add(createLabel("Vertex Name:"));
+            section.add(space(GAP_SMALL));
+            section.add(vertexInput);
+
+            JPanel addRow = new JPanel(new GridLayout(1, 2, 10, 0));
+            addRow.setBackground(WHITE);
+            addRow.add(addVertexButton);
+            addRow.add(renameButton);
+            makeFullWidth(addRow);
+            section.add(space(GAP_SMALL));
+            section.add(addRow);
+
+            section.add(space(GAP_MEDIUM));
+            section.add(createLabel("Vertices (select one to rename or delete):"));
+            section.add(space(GAP_SMALL));
+            section.add(wrapList(vertexList));
+
+            section.add(space(GAP_SMALL));
+            section.add(deleteVertexButton);
+            return section;
+        }
+
+        private JPanel buildEdgeSection() {
+            JPanel section = createSection();
+            section.add(space(GAP_MEDIUM));
+            section.add(createLabel("Connection From:"));
+            section.add(space(GAP_SMALL));
+            section.add(fromCombo);
+
+            section.add(space(GAP_SMALL));
+            section.add(createLabel("Connection To:"));
+            section.add(space(GAP_SMALL));
+            section.add(toCombo);
+
+            section.add(space(GAP_SMALL));
+            section.add(addEdgeButton);
+
+            section.add(space(GAP_MEDIUM));
+            section.add(createLabel("Edges:"));
+            section.add(space(GAP_SMALL));
+            section.add(wrapList(edgeList));
+
+            section.add(space(GAP_SMALL));
+            section.add(removeEdgeButton);
+            return section;
+        }
+
+        private JPanel buildDfsSection() {
+            JPanel section = createSection();
+            section.add(space(GAP_MEDIUM));
+            section.add(createLabel("Starting Vertex:"));
+            section.add(space(GAP_SMALL));
+            section.add(startCombo);
+
+            section.add(space(GAP_MEDIUM));
+            section.add(createLabel("Target Vertex (optional):"));
+            section.add(space(GAP_SMALL));
+            section.add(targetCombo);
+
+            section.add(space(GAP_LARGE));
+            section.add(visualizeButton);
+            section.add(space(GAP_SMALL));
+            section.add(clearButton);
+            return section;
+        }
+
+        private JPanel createSection() {
+            JPanel section = new JPanel();
+            section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
+            section.setBackground(WHITE);
+            section.setAlignmentX(Component.LEFT_ALIGNMENT);
+            return section;
+        }
+
+        private JLabel createLabel(String text) {
+            JLabel label = new JLabel(text);
+            label.setFont(LABEL_FONT);
+            label.setForeground(DARK);
+            label.setAlignmentX(Component.LEFT_ALIGNMENT);
+            return label;
+        }
+
+        private JTextField createTextField() {
+            JTextField field = new RoundedTextField(FIELD_BORDER, BLUE, CONTROL_RADIUS);
+            field.setFont(FIELD_FONT);
+            field.setForeground(DARK);
+            field.setBackground(FIELD_BG);
+            field.setCaretColor(DARK);
+            field.setDisabledTextColor(GRAY);
+            field.setHorizontalAlignment(JTextField.CENTER);
+            makeFullWidth(field);
+            return field;
+        }
+
+        private JComboBox<String> createComboBox(String[] items) {
+            JComboBox<String> combo = new RoundedComboBox(items, FIELD_BORDER, BLUE, CONTROL_RADIUS);
+            combo.setFont(FIELD_FONT);
+            combo.setForeground(DARK);
+            combo.setBackground(FIELD_BG);
+            makeFullWidth(combo);
+            return combo;
+        }
+
+        private JButton createButton(String text, Color color) {
+            JButton button = new RoundedButton(text, BUTTON_RADIUS);
+            button.setFont(BUTTON_FONT);
+            button.setForeground(WHITE);
+            button.setBackground(color);
+            makeFullWidth(button);
+            return button;
+        }
+
+        private void styleList(JList<?> list) {
+            list.setFont(FIELD_FONT);
+            list.setForeground(DARK);
+            list.setBackground(FIELD_BG);
+            list.setSelectionBackground(BLUE);
+            list.setSelectionForeground(WHITE);
+            list.setFixedCellHeight(26);
+            list.setVisibleRowCount(4);
+        }
+
+        private JScrollPane wrapList(JList<?> list) {
+            JScrollPane pane = new JScrollPane(list);
+            pane.setBorder(BorderFactory.createLineBorder(FIELD_BORDER));
+            pane.setBackground(WHITE);
+            pane.getViewport().setBackground(FIELD_BG);
+            makeFullWidthHeight(pane, 110);
+            return pane;
+        }
+
+        private void makeFullWidth(JComponent component) {
+            makeFullWidthHeight(component, CONTROL_HEIGHT);
+        }
+
+        private void makeFullWidthHeight(JComponent component, int height) {
+            component.setAlignmentX(Component.LEFT_ALIGNMENT);
+            component.setPreferredSize(new Dimension(0, height));
+            component.setMinimumSize(new Dimension(0, height));
+            component.setMaximumSize(new Dimension(Integer.MAX_VALUE, height));
+        }
+
+        private Component space(int height) {
+            return Box.createVerticalStrut(height);
+        }
+
+        //functionalities
+        private void addButtonActions() {
+            typeCombo.addActionListener(e -> changeGraphType());
+            addVertexButton.addActionListener(e -> addVertex());
+            renameButton.addActionListener(e -> renameVertex());
+            deleteVertexButton.addActionListener(e -> deleteVertex());
+            addEdgeButton.addActionListener(e -> addEdge());
+            removeEdgeButton.addActionListener(e -> removeEdge());
+            visualizeButton.addActionListener(e -> visualizeDFS());
+            clearButton.addActionListener(e -> clearGraph());
+        }
+
+        private void showError(String message) {
+            JOptionPane.showMessageDialog(this, message, "Invalid Input", JOptionPane.ERROR_MESSAGE);
+        }
+
+        private String typeName() {
+            return directed ? DIRECTED : UNDIRECTED;
+        }
+
+        private void changeGraphType() {
+            String selected = (String) typeCombo.getSelectedItem();
+            boolean newDirection = DIRECTED.equals(selected);
+
+            if (newDirection == directed) {
+                return;
+            }
+
+            directed = newDirection;
+            graph.setDirected(directed);
+            refreshAll();
+        }
+
+        private String readVertexInput() {
+            String value = vertexInput.getText().trim();
+            if (value.isEmpty()) {
+                showError("Please enter a vertex name.");
+                return null;
+            }
+            if (value.equals(NONE)) {
+                showError("\"" + NONE + "\" is reserved for the empty target choice.\nPlease use another name.");
+                return null;
+            }
+            return value;
+        }
+
+        private void addVertex() {
+            String value = readVertexInput();
+            if (value == null) {
+                return;
+            }
+            if (!graph.addVertex(value)) {
+                showError("A vertex named \"" + value + "\" already exists.");
+                return;
+            }
+
+            vertexInput.setText("");
+            refreshAll();
+            vertexList.setSelectedValue(value, true);
+            graphPanel.highlightVertex(value);
+        }
+
+        private void renameVertex() {
+            String selected = vertexList.getSelectedValue();
+            if (selected == null) {
+                showError("Please select a vertex to rename.");
+                return;
+            }
+
+            String value = readVertexInput();
+            if (value == null) {
+                return;
+            }
+            if (value.equals(selected)) {
+                vertexInput.setText("");
+                return;
+            }
+            if (!graph.renameVertex(selected, value)) {
+                showError("A vertex named \"" + value + "\" already exists.");
+                return;
+            }
+
+            vertexInput.setText("");
+            refreshAll();
+            vertexList.setSelectedValue(value, true);
+            graphPanel.highlightVertex(value);
+        }
+
+        private void deleteVertex() {
+            String selected = vertexList.getSelectedValue();
+            if (selected == null) {
+                showError("Please select a vertex to delete.");
+                return;
+            }
+
+            graph.removeVertex(selected);
+            refreshAll();
+            graphPanel.highlightVertex(null);
+        }
+
+        private void addEdge() {
+            String from = (String) fromCombo.getSelectedItem();
+            String to = (String) toCombo.getSelectedItem();
+
+            if (from == null || to == null || from.equals(NONE) || to.equals(NONE)) {
+                showError("Add at least two vertices before creating an edge.");
+                return;
+            }
+            if (!graph.addEdge(from, to)) {
+                showError("That edge already exists in this graph.");
+                return;
+            }
+
+            refreshAll();
+            edgeList.setSelectedValue(graph.getEdges().get(graph.edgeCount() - 1), true);
+            graphPanel.setTraversalEdge(null, null);
+        }
+
+        private void removeEdge() {
+            Graph.Edge selected = edgeList.getSelectedValue();
+            if (selected == null) {
+                showError("Please select an edge to remove.");
+                return;
+            }
+
+            graph.removeEdge(selected.from, selected.to);
+            refreshAll();
+            graphPanel.setTraversalEdge(null, null);
+        }
+
+        private void clearGraph() {
+            int answer = JOptionPane.showConfirmDialog(
+                this,
+                "Remove all vertices and edges?",
+                "Clear Graph",
+                JOptionPane.YES_NO_OPTION);
+
+            if (answer == JOptionPane.YES_OPTION) {
+                graph.clear();
+                vertexInput.setText("");
+                graphPanel.reset();
+                refreshAll();
+            }
+        }
+
+        private void visualizeDFS() {
+            if (graph.vertexCount() == 0) {
+                showError("The graph is empty. Please add at least one vertex first.");
+                return;
+            }
+
+            String start = (String) startCombo.getSelectedItem();
+            if (start == null || !graph.hasVertex(start)) {
+                showError("Please choose a starting vertex.");
+                return;
+            }
+
+            String selectedTarget = (String) targetCombo.getSelectedItem();
+            String target = (selectedTarget == null || selectedTarget.equals(NONE)) ? "" : selectedTarget;
+            if (!target.isEmpty() && !graph.hasVertex(target)) {
+                showError("Target \"" + target + "\" is not in the graph.");
+                return;
+            }
+
+            DFSVisualizerFrame.GraphDFSVisualizerFrame dfsFrame =
+                new DFSVisualizerFrame.GraphDFSVisualizerFrame(graph, directed, start, target);
+            dfsFrame.setVisible(true);
+
+            dispose();
+        }
+
+        //keeps every list and combo in sync with the graph
+        private void refreshAll() {
+            vertexModel.clear();
+            for (String value : graph.getVertices()) {
+                vertexModel.addElement(value);
+            }
+
+            edgeModel.clear();
+            for (Graph.Edge edge : graph.getEdges()) {
+                edgeModel.addElement(edge);
+            }
+
+            fillCombo(fromCombo, false);
+            fillCombo(toCombo, false);
+            fillCombo(startCombo, false);
+            fillCombo(targetCombo, true);
+
+            typeLabel.setText("Graph Type: " + typeName());
+            statusLabel.setText("Vertices: " + graph.vertexCount() + "    |    Edges: " + graph.edgeCount());
+            graphPanel.setGraph(graph);
+
+            revalidate();
+            repaint();
+        }
+
+        private void fillCombo(JComboBox<String> combo, boolean includeNone) {
+            String previous = (String) combo.getSelectedItem();
+
+            combo.removeAllItems();
+            if (includeNone) {
+                combo.addItem(NONE);
+            }
+            for (String value : graph.getVertices()) {
+                combo.addItem(value);
+            }
+
+            if (includeNone) {
+                boolean keep = previous != null
+                    && (previous.equals(NONE) || graph.hasVertex(previous));
+                combo.setSelectedItem(keep ? previous : NONE);
+            } else if (!graph.getVertices().isEmpty()) {
+                boolean keep = previous != null && graph.hasVertex(previous);
+                combo.setSelectedItem(keep ? previous : graph.getVertices().get(0));
+            }
+        }
+
+
+        //a general graph that can be either directed or undirected
+        static class Graph {
+
+            //one connection between two vertices (a loop is allowed)
+            class Edge {
+
+                String from;
+                String to;
+
+                Edge(String from, String to) {
+                    this.from = from;
+                    this.to = to;
+                }
+
+                boolean isLoop() {
+                    return from.equals(to);
+                }
+
+                boolean connects(String a, String b) {
+                    if (from.equals(a) && to.equals(b)) {
+                        return true;
+                    }
+                    return !directed && from.equals(b) && to.equals(a);
+                }
+
+                String label(boolean isDirected) {
+                    return from + (isDirected ? " -> " : " -- ") + to;
+                }
+            }
+
+            private final List<String> vertices = new ArrayList<>();
+            private final List<Edge> edges = new ArrayList<>();
+            private boolean directed;
+
+            Graph(boolean directed) {
+                this.directed = directed;
+            }
+
+            boolean isDirected() {
+                return directed;
+            }
+
+            //switching to undirected removes duplicate reversed connections
+            void setDirected(boolean directed) {
+                if (this.directed == directed) {
+                    return;
+                }
+                this.directed = directed;
+
+                if (!directed) {
+                    for (int i = 0; i < edges.size(); i++) {
+                        Edge edge = edges.get(i);
+                        for (int j = i + 1; j < edges.size(); j++) {
+                            Edge other = edges.get(j);
+                            if (edge.from.equals(other.to) && edge.to.equals(other.from)) {
+                                edges.remove(j);
+                                j--;
+                            }
+                        }
+                    }
+                }
+            }
+
+            List<String> getVertices() {
+                return Collections.unmodifiableList(vertices);
+            }
+
+            List<Edge> getEdges() {
+                return Collections.unmodifiableList(edges);
+            }
+
+            int vertexCount() {
+                return vertices.size();
+            }
+
+            int edgeCount() {
+                return edges.size();
+            }
+
+            boolean hasVertex(String value) {
+                return vertices.contains(value);
+            }
+
+            boolean addVertex(String value) {
+                if (value == null || value.trim().isEmpty() || hasVertex(value)) {
+                    return false;
+                }
+                vertices.add(value);
+                return true;
+            }
+
+            //renames a vertex and updates every edge that touches it
+            boolean renameVertex(String oldValue, String newValue) {
+                if (oldValue == null || newValue == null || newValue.trim().isEmpty()
+                        || !hasVertex(oldValue) || hasVertex(newValue)) {
+                    return false;
+                }
+
+                vertices.set(vertices.indexOf(oldValue), newValue);
+                for (Edge edge : edges) {
+                    if (edge.from.equals(oldValue)) {
+                        edge.from = newValue;
+                    }
+                    if (edge.to.equals(oldValue)) {
+                        edge.to = newValue;
+                    }
+                }
+                return true;
+            }
+
+            //removing a vertex also removes all of its connections
+            boolean removeVertex(String value) {
+                if (!vertices.remove(value)) {
+                    return false;
+                }
+                edges.removeIf(edge -> edge.from.equals(value) || edge.to.equals(value));
+                return true;
+            }
+
+            boolean hasEdge(String from, String to) {
+                if (!hasVertex(from) || !hasVertex(to)) {
+                    return false;
+                }
+                for (Edge edge : edges) {
+                    if (edge.connects(from, to)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            boolean addEdge(String from, String to) {
+                if (hasEdge(from, to)) {
+                    return false;
+                }
+                edges.add(new Edge(from, to));
+                return true;
+            }
+
+            boolean removeEdge(String from, String to) {
+                for (Edge edge : edges) {
+                    if (edge.connects(from, to)) {
+                        edges.remove(edge);
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            //neighbors are returned in the order the edges were added
+            //so that a DFS always visits them consistently
+            List<String> neighbors(String value) {
+                List<String> found = new ArrayList<>();
+                for (Edge edge : edges) {
+                    if (edge.from.equals(value) && !found.contains(edge.to)) {
+                        found.add(edge.to);
+                    }
+                    if (!directed && edge.to.equals(value) && !found.contains(edge.from)) {
+                        found.add(edge.from);
+                    }
+                }
+                return found;
+            }
+
+            void clear() {
+                vertices.clear();
+                edges.clear();
+            }
+        }
     }
 }
 

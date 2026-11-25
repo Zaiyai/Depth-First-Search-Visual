@@ -49,15 +49,25 @@ public class Main extends JFrame {
         buttonPanel.setBackground(BG);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 60, 0));
 
-        JButton proceedButton = createButton("PROCEED", PINK);
-        proceedButton.addActionListener(e -> {
+        JButton treeButton = createButton("BUILD TREE", PINK);
+        treeButton.addActionListener(e -> {
             TreeBuilderFrame builder = new TreeBuilderFrame();
             if (builder.isReady()) {
                 dispose();
             }
         });
 
-        buttonPanel.add(proceedButton);
+        buttonPanel.add(treeButton);
+
+        JButton graphButton = createButton("BUILD GRAPH", PINK);
+        graphButton.addActionListener(e -> {
+            TreeBuilderFrame.GraphBuilderFrame builder = new TreeBuilderFrame.GraphBuilderFrame();
+            if (builder.isReady()) {
+                dispose();
+            }
+        });
+
+        buttonPanel.add(graphButton);
         JButton exitButton = createButton("EXIT", RIBBON);
 
         exitButton.addActionListener(e -> {
