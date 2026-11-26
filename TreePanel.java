@@ -37,6 +37,7 @@ public class TreePanel extends JPanel {
     private final DefaultListModel<TreeNode> visited = new DefaultListModel<>();
     private final DefaultListModel<TreeNode> order = new DefaultListModel<>();
     private final DefaultListModel<Integer> depths = new DefaultListModel<>();
+    private final List<TreeNode> shortestPath = new ArrayList<>();
     private int deepestRow;
 
 
@@ -92,20 +93,35 @@ public class TreePanel extends JPanel {
         if (node == null) return;
 
         Point p = positionOf(node, xStep, yStep);
-        g2.setColor(EDGE);
-
         if (node.left != null) {
             Point c = positionOf(node.left, xStep, yStep);
+            boolean onPath = isShortestPathEdge(node, node.left);
+            g2.setColor(onPath ? GREEN : EDGE);
+            g2.setStroke(new BasicStroke(onPath ? 4f : 2f));
             g2.drawLine(p.x, p.y, c.x, c.y);
         }
 
         if (node.right != null) {
             Point c = positionOf(node.right, xStep, yStep);
+            boolean onPath = isShortestPathEdge(node, node.right);
+            g2.setColor(onPath ? GREEN : EDGE);
+            g2.setStroke(new BasicStroke(onPath ? 4f : 2f));
             g2.drawLine(p.x, p.y, c.x, c.y);
         }
+        g2.setStroke(new BasicStroke(2f));
 
         drawEdges(g2, node.left, xStep, yStep);
         drawEdges(g2, node.right, xStep, yStep);
+    }
+
+    private boolean isShortestPathEdge(TreeNode from, TreeNode to) {
+        for (int i = 0; i + 1 < shortestPath.size(); i++) {
+            if (shortestPath.get(i) == from && shortestPath.get(i + 1) == to
+                    || shortestPath.get(i) == to && shortestPath.get(i + 1) == from) {
+                return true;
+            }
+        }
+        return false;
     }
 
      //draws each node and its value
@@ -198,10 +214,19 @@ public class TreePanel extends JPanel {
         repaint();
     }
 
+    public void setShortestPath(List<TreeNode> path) {
+        shortestPath.clear();
+        if (path != null) {
+            shortestPath.addAll(path);
+        }
+        repaint();
+    }
+
     public void reset() {
         visited.clear();
         currentNode = null;
         foundNode = null;
+        shortestPath.clear();
         repaint();
     }
 

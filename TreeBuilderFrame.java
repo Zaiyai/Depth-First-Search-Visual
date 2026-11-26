@@ -10,6 +10,8 @@ import java.util.List;
 
 public class TreeBuilderFrame extends JFrame {
 
+    public static final String ITERATIVE_SEARCH = "Iterative Deepening (Shortest Path)";
+
     private static final Color DARK = new Color(122, 52, 82);
     private static final Color BG = new Color(255, 228, 236);
     private static final Color FIELD_BG = new Color(255, 240, 245);
@@ -56,6 +58,7 @@ public class TreeBuilderFrame extends JFrame {
     private JTextField startInput;
     private JTextField targetInput;
 
+    private JLabel targetLabel;
     private JComboBox<String> traversalOrder;
 
     //shows which node is being processed
@@ -181,7 +184,8 @@ public class TreeBuilderFrame extends JFrame {
         traversalOrder = createComboBox(new String[]{
             "Pre-order",
             "In-order",
-            "Post-order"});
+            "Post-order",
+            ITERATIVE_SEARCH});
 
         //button colors
         setRootButton = createButton("SET ROOT", BLUE);
@@ -189,7 +193,7 @@ public class TreeBuilderFrame extends JFrame {
         noButton = createButton("NO", GRAY);
         addButton = createButton("ADD CHILDREN", BLUE);
         cancelChildButton = createButton("CANCEL", RED);
-        finishButton = createButton("VISUALIZE DFS", GREEN);
+        finishButton = createButton("VISUALIZE", GREEN);
 
         parentLabel = createLabel("Waiting for root...");
         parentLabel.setForeground(AMBER);
@@ -309,12 +313,13 @@ public class TreeBuilderFrame extends JFrame {
         finishSection.add(startInput);
 
         finishSection.add(space(GAP_MEDIUM));
-        finishSection.add(createLabel("Target Node:"));
+        targetLabel = createLabel("Target Node (optional):");
+        finishSection.add(targetLabel);
         finishSection.add(space(GAP_SMALL));
         finishSection.add(targetInput);
 
         finishSection.add(space(GAP_MEDIUM));
-        finishSection.add(createLabel("Choose the traversal order:"));
+        finishSection.add(createLabel("Choose a traversal or search mode:"));
         finishSection.add(space(GAP_SMALL));
         finishSection.add(traversalOrder);
 
@@ -430,6 +435,14 @@ public class TreeBuilderFrame extends JFrame {
 
          //open the visualizer
         finishButton.addActionListener(e -> startDFS());
+         traversalOrder.addActionListener(e -> updateSearchModeLabel());
+    }
+
+    private void updateSearchModeLabel() {
+         boolean shortestPathMode = ITERATIVE_SEARCH.equals(traversalOrder.getSelectedItem());
+         targetLabel.setText(shortestPathMode
+                 ? "Target Node (required for shortest path):"
+                 : "Target Node (optional):");
     }
 
     //error popup
@@ -571,7 +584,7 @@ public class TreeBuilderFrame extends JFrame {
         moveToNextParent();
     }
 
-    //validates the DFS settings
+    //validates the tree search settings
     private void startDFS() {
 
         if (root == null) {
@@ -582,6 +595,12 @@ public class TreeBuilderFrame extends JFrame {
         String order = (String) traversalOrder.getSelectedItem();
         String start = startInput.getText().trim();
         String target = targetInput.getText().trim();
+
+        if (ITERATIVE_SEARCH.equals(order) && target.isEmpty()) {
+            showError("Choose a target node so iterative deepening can find the shortest path.");
+            targetInput.requestFocus();
+            return;
+        }
 
         //start at the root unless another node is given
         TreeNode startNode = root;
@@ -619,8 +638,12 @@ public class TreeBuilderFrame extends JFrame {
             }
         }
 
-        DFSVisualizerFrame dfsFrame = new DFSVisualizerFrame(root, startNode, order, target, isBST);
-        dfsFrame.setVisible(true);
+        if (ITERATIVE_SEARCH.equals(order)) {
+            new TreeIterativeDeepeningFrame(root, startNode, target, isBST).setVisible(true);
+        } else {
+            DFSVisualizerFrame dfsFrame = new DFSVisualizerFrame(root, startNode, order, target, isBST);
+            dfsFrame.setVisible(true);
+        }
 
         dispose();
     }
