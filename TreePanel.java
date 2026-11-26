@@ -246,6 +246,7 @@ public class TreePanel extends JPanel {
         private String edgeTo;
 
         private final Set<String> visited = new LinkedHashSet<>();
+        private final List<String[]> highlightedPath = new ArrayList<>();
         private final Map<String, Point> positions = new HashMap<>();
         private boolean edgeCreationEnabled;
         private String dragFrom;
@@ -377,7 +378,7 @@ public class TreePanel extends JPanel {
                 }
 
                 boolean active = edge.connects(edgeFrom == null ? "\u0000" : edgeFrom,
-                    edgeTo == null ? "\u0000" : edgeTo);
+                    edgeTo == null ? "\u0000" : edgeTo) || onHighlightedPath(edge);
 
                 g2.setColor(active ? GREEN : EDGE);
                 g2.setStroke(new BasicStroke(active ? 3f : 2f));
@@ -391,6 +392,16 @@ public class TreePanel extends JPanel {
                 }
             }
             g2.setStroke(new BasicStroke(1f));
+        }
+
+        //true when an edge belongs to the shortest path found by iterative deepening
+        private boolean onHighlightedPath(TreeBuilderFrame.GraphBuilderFrame.Graph.Edge edge) {
+            for (String[] pair : highlightedPath) {
+                if (edge.connects(pair[0], pair[1])) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void drawDirectedEdge(Graphics2D g2, Point from, Point to, int radius) {
@@ -522,6 +533,17 @@ public class TreePanel extends JPanel {
             repaint();
         }
 
+        //highlights every edge along the final shortest path
+        public void setShortestPath(List<String> path) {
+            highlightedPath.clear();
+            if (path != null) {
+                for (int i = 0; i + 1 < path.size(); i++) {
+                    highlightedPath.add(new String[]{path.get(i), path.get(i + 1)});
+                }
+            }
+            repaint();
+        }
+
         public void markVisited(String value) {
             if (value != null) {
                 visited.add(value);
@@ -536,6 +558,7 @@ public class TreePanel extends JPanel {
 
         public void reset() {
             visited.clear();
+            highlightedPath.clear();
             currentVertex = null;
             foundVertex = null;
             edgeFrom = null;

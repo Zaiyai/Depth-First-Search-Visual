@@ -732,6 +732,10 @@ public class TreeBuilderFrame extends JFrame {
         private static final String UNDIRECTED = "Undirected Graph";
         private static final String DIRECTED = "Directed Graph";
 
+        //graph search modes offered in the DFS settings
+        public static final String PLAIN_DFS = "Plain DFS";
+        public static final String ITERATIVE_DFS = "Iterative Deepening (Shortest Path)";
+
         //graph data and state
         private Graph graph;
         private boolean directed;
@@ -746,6 +750,8 @@ public class TreeBuilderFrame extends JFrame {
         private JTextField vertexInput;
         private JComboBox<String> startCombo;
         private JComboBox<String> targetCombo;
+        private JComboBox<String> dfsModeCombo;
+        private JLabel targetLabel;
 
         private final DefaultListModel<String> vertexModel = new DefaultListModel<>();
         private final DefaultListModel<Graph.Edge> edgeModel = new DefaultListModel<>();
@@ -771,12 +777,17 @@ public class TreeBuilderFrame extends JFrame {
             buildFrame();
             addButtonActions();
             refreshAll();
+            dfsModeCombo.setSelectedItem(ITERATIVE_DFS);
             setVertexEntryMode(true);
             setVisible(true);
         }
 
         //used when returning from the visualizer so the graph can be edited again
         public GraphBuilderFrame(Graph graph, boolean directed, String start, String target) {
+            this(graph, directed, start, target, PLAIN_DFS);
+        }
+
+        public GraphBuilderFrame(Graph graph, boolean directed, String start, String target, String mode) {
             this.graph = graph;
             this.directed = directed;
             this.ready = true;
@@ -786,6 +797,7 @@ public class TreeBuilderFrame extends JFrame {
 
             startCombo.setSelectedItem(start);
             targetCombo.setSelectedItem(target == null || target.isEmpty() ? NONE : target);
+            dfsModeCombo.setSelectedItem(mode == null ? PLAIN_DFS : mode);
 
             refreshAll();
             setVertexEntryMode(false);
@@ -966,13 +978,21 @@ public class TreeBuilderFrame extends JFrame {
         private JPanel buildDfsSection() {
             JPanel section = createSection();
             dfsSettingsSection = createSection();
+
+            dfsModeCombo = createComboBox(new String[]{PLAIN_DFS, ITERATIVE_DFS});
+            dfsSettingsSection.add(space(GAP_MEDIUM));
+            dfsSettingsSection.add(createLabel("DFS Mode:"));
+            dfsSettingsSection.add(space(GAP_SMALL));
+            dfsSettingsSection.add(dfsModeCombo);
+
             dfsSettingsSection.add(space(GAP_MEDIUM));
             dfsSettingsSection.add(createLabel("Starting Vertex:"));
             dfsSettingsSection.add(space(GAP_SMALL));
             dfsSettingsSection.add(startCombo);
 
             dfsSettingsSection.add(space(GAP_MEDIUM));
-            dfsSettingsSection.add(createLabel("Target Vertex (optional):"));
+            targetLabel = createLabel("Target Vertex (optional):");
+            dfsSettingsSection.add(targetLabel);
             dfsSettingsSection.add(space(GAP_SMALL));
             dfsSettingsSection.add(targetCombo);
             dfsSettingsSection.add(space(GAP_LARGE));
@@ -1071,6 +1091,13 @@ public class TreeBuilderFrame extends JFrame {
             removeEdgeButton.addActionListener(e -> removeEdge());
             visualizeButton.addActionListener(e -> visualizeDFS());
             graphPanel.setEdgeCreationHandler(this::addConnection);
+
+            dfsModeCombo.addActionListener(e -> {
+                boolean shortest = ITERATIVE_DFS.equals(dfsModeCombo.getSelectedItem());
+                targetLabel.setText(shortest
+                        ? "Target Vertex (required to find the fewest steps):"
+                        : "Target Vertex (optional):");
+            });
         }
 
         private void finishAddingVertices() {
@@ -1207,9 +1234,21 @@ public class TreeBuilderFrame extends JFrame {
                 return;
             }
 
-            DFSVisualizerFrame.GraphDFSVisualizerFrame dfsFrame =
-                new DFSVisualizerFrame.GraphDFSVisualizerFrame(graph, directed, start, target);
-            dfsFrame.setVisible(true);
+            String mode = (String) dfsModeCombo.getSelectedItem();
+
+            if (ITERATIVE_DFS.equals(mode)) {
+                if (target.isEmpty()) {
+                    showError("Choose a target vertex so iterative deepening can find the shortest path.");
+                    targetCombo.requestFocus();
+                    return;
+                }
+
+                new DFSVisualizerFrame.GraphIterativeDeepeningFrame(graph, directed, start, target)
+                        .setVisible(true);
+            } else {
+                new DFSVisualizerFrame.GraphDFSVisualizerFrame(graph, directed, start, target)
+                        .setVisible(true);
+            }
 
             dispose();
         }
