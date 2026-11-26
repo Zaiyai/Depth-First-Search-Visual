@@ -74,8 +74,8 @@ public class Main extends JFrame {
         String[] options = {
             "Binary Tree",
             "Binary Search Tree",
+            "Undirected Graph",
             "Directed Graph",
-            "Undirected Graph"
         };
 
         int choice = JOptionPane.showOptionDialog(
