@@ -96,10 +96,10 @@ public class Main extends JFrame {
                 new TreeBuilderFrame(true);
                 break;
             case 2:
-                new TreeBuilderFrame.GraphBuilderFrame(true);
+                new TreeBuilderFrame.GraphBuilderFrame(false);
                 break;
             case 3:
-                new TreeBuilderFrame.GraphBuilderFrame(false);
+                new TreeBuilderFrame.GraphBuilderFrame(true);
                 break;
             default:
                 return;
